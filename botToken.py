@@ -1,15 +1,21 @@
 import os
-import requests, random
+import requests
+import random
 from telegram.ext import Updater, CommandHandler
 
-def fetch_tokens(raw_url):
+def fetch_tokens(raw_url: str):
     try:
-        r = requests.get(raw_url.strip())
+        # Tambahkan cache-buster agar tidak kena CDN cache
+        url = f"{raw_url}?nocache={random.randint(1, 100000)}"
+        r = requests.get(url)
+        print(f"[DEBUG] Fetch {url} -> status {r.status_code}")
         if r.status_code == 200:
+            # Tampilkan sebagian isi untuk verifikasi di log
+            print("[DEBUG] Content sample:", r.text[:200])
             return r.text.strip().splitlines()
-        else:
-            return []
+        return []
     except Exception as e:
+        print("[DEBUG] Error:", e)
         return []
 
 def grab(update, context):
@@ -31,8 +37,8 @@ def gojek(update, context):
         update.message.reply_text("Tidak ada token Gojek ditemukan.")
 
 def main():
-    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # ambil dari GitHub Secrets
-    updater = Updater(TOKEN, use_context=True)
+    token = os.getenv("TELEGRAM_BOT_TOKEN")  # ambil dari GitHub Secrets
+    updater = Updater(token, use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("grab", grab))
