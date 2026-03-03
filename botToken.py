@@ -12,7 +12,7 @@ def fetch_tokens(raw_url):
         return []
 
 def grab(update, context):
-    url = "https://gist.githubusercontent.com/<username>/<gist_id>/raw/grab.txt"
+    url = "https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/3bc47a673d15732de67b05e790fb2da3e3d58e29/Grab"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
