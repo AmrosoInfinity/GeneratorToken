@@ -1,0 +1,2 @@
+# GeneratorToken
+Bot Token
