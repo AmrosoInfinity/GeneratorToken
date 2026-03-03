@@ -5,7 +5,7 @@ from telegram.ext import Updater, CommandHandler
 
 def fetch_tokens(raw_url: str):
     try:
-        # Tambahkan cache-buster agar tidak kena CDN cache
+        # Tambahkan cache-buster agar tidak kena cache CDN
         url = f"{raw_url}?nocache={random.randint(1, 100000)}"
         r = requests.get(url)
         print(f"[DEBUG] Fetch {url} -> status {r.status_code}")
@@ -19,7 +19,7 @@ def fetch_tokens(raw_url: str):
         return []
 
 def grab(update, context):
-    url = "https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/3bc47a673d15732de67b05e790fb2da3e3d58e29/Grab"
+    url = "https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
@@ -28,7 +28,7 @@ def grab(update, context):
         update.message.reply_text("Tidak ada token Grab ditemukan.")
 
 def gojek(update, context):
-    url = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/81e594b82d518de43c200b1caf041e86783c01fa/Gojek"
+    url = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
