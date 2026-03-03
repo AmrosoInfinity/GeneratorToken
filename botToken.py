@@ -21,7 +21,7 @@ def grab(update, context):
         update.message.reply_text("Tidak ada token Grab ditemukan.")
 
 def gojek(update, context):
-    url = "https://gist.githubusercontent.com/<username>/<gist_id>/raw/gojek.txt"
+    url = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/c963c4608df05ecb04c5a1eb275b2014b71e80fe/Gojek"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
