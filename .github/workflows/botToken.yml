@@ -20,5 +20,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run botToken
-        run: python botToken.py
+      - name: Run bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python bot.py
