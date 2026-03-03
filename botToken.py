@@ -1,3 +1,4 @@
+import os
 import requests, random
 from telegram.ext import Updater, CommandHandler
 
@@ -12,7 +13,7 @@ def fetch_tokens(raw_url):
         return []
 
 def grab(update, context):
-    url = "https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/3bc47a673d15732de67b05e790fb2da3e3d58e29/Grab"
+    url = "https://gist.githubusercontent.com/<username>/<gist_id>/raw/grab.txt"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
@@ -21,7 +22,7 @@ def grab(update, context):
         update.message.reply_text("Tidak ada token Grab ditemukan.")
 
 def gojek(update, context):
-    url = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/c963c4608df05ecb04c5a1eb275b2014b71e80fe/Gojek"
+    url = "https://gist.githubusercontent.com/<username>/<gist_id>/raw/gojek.txt"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
@@ -30,7 +31,7 @@ def gojek(update, context):
         update.message.reply_text("Tidak ada token Gojek ditemukan.")
 
 def main():
-    TOKEN = "TELEGRAM_BOT_TOKEN"  # ganti dengan token bot dari BotFather
+    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # ambil dari GitHub Secrets
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
