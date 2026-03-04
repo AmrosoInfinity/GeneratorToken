@@ -58,7 +58,7 @@ def ask(update, context):
         if r.status_code == 200:
             answer = r.json()["choices"][0]["message"]["content"]
             update.message.reply_text(answer)
-        elif r.status code == 429:
+        elif r.status_code == 429:
             update.message.reply_text("AmrosolBot saat ini sedang tidak bisa menjawab pertanyaan kamu, mohon coba lagi nanti ya")
         else:
             update.message.reply_text(f"AmrosolBot sibuk: {r.status_code}")
