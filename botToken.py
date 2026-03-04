@@ -19,7 +19,7 @@ def fetch_tokens(raw_url: str):
         return []
 
 def grab(update, context):
-    url = "https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab"
+    url = "https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/94c95c93a2901d46b03b45b355adedde1293f473/Grab"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
@@ -28,13 +28,40 @@ def grab(update, context):
         update.message.reply_text("Tidak ada token Grab ditemukan.")
 
 def gojek(update, context):
-    url = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek"
+    url = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/81e594b82d518de43c200b1caf041e86783c01fa/Gojek"
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
         update.message.reply_text(f"=== Token Gojek ===\n{token}")
     else:
         update.message.reply_text("Tidak ada token Gojek ditemukan.")
+
+# === Handler Chat OpenAI ===
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # simpan di GitHub Secrets
+
+def ask(update, context):
+    query = " ".join(context.args)
+    if not query:
+        update.message.reply_text("Gunakan format: /ask <pertanyaan>")
+        return
+
+    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
+    json_data = {
+        "model": "gpt-4o-mini",   # contoh model
+        "messages": [{"role": "user", "content": query}],
+        "max_tokens": 200
+    }
+
+    try:
+        r = requests.post("https://api.openai.com/v1/chat/completions",
+                          headers=headers, json=json_data)
+        if r.status_code == 200:
+            answer = r.json()["choices"][0]["message"]["content"]
+            update.message.reply_text(answer)
+        else:
+            update.message.reply_text(f"Error dari OpenAI: {r.status_code}")
+    except Exception as e:
+        update.message.reply_text(f"Terjadi error: {e}")
 
 def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")  # ambil dari GitHub Secrets
@@ -43,6 +70,7 @@ def main():
 
     dp.add_handler(CommandHandler("grab", grab))
     dp.add_handler(CommandHandler("gojek", gojek))
+    dp.add_handler(CommandHandler("ask", ask))  # tambahkan handler baru
 
     updater.start_polling()
     updater.idle()
