@@ -3,21 +3,40 @@ from telegram.ext import CommandHandler
 
 def add_fakegps(update, context):
     if not context.args:
-        update.message.reply_text("Gunakan format: /add_fakegps <package>")
+        update.message.reply_text("Gunakan format: /add_fakegps <package1>,<package2>,...")
         return
-    package = context.args[0]
+
+    # Gabungkan semua argumen jadi satu string, lalu split dengan koma
+    packages = " ".join(context.args).split(",")
     update.message.reply_text("⚠️ Perintah ini hanya berjalan di perangkat root dengan Termux root access.")
-    os.system(f"appops set {package} android:mock_location allow")
-    update.message.reply_text(f"Mock location diizinkan untuk {package}")
+
+    results = []
+    for pkg in packages:
+        pkg = pkg.strip()
+        if pkg:
+            os.system(f"appops set {pkg} android:mock_location allow")
+            results.append(f"✅ Mock location diizinkan untuk {pkg}")
+
+    update.message.reply_text("\n".join(results))
+
 
 def deny_fakegps(update, context):
     if not context.args:
-        update.message.reply_text("Gunakan format: /deny_fakegps <package>")
+        update.message.reply_text("Gunakan format: /deny_fakegps <package1>,<package2>,...")
         return
-    package = context.args[0]
+
+    packages = " ".join(context.args).split(",")
     update.message.reply_text("⚠️ Perintah ini hanya berjalan di perangkat root dengan Termux root access.")
-    os.system(f"appops set {package} android:mock_location deny")
-    update.message.reply_text(f"Mock location ditolak untuk {package}")
+
+    results = []
+    for pkg in packages:
+        pkg = pkg.strip()
+        if pkg:
+            os.system(f"appops set {pkg} android:mock_location deny")
+            results.append(f"❌ Mock location ditolak untuk {pkg}")
+
+    update.message.reply_text("\n".join(results))
+
 
 def register_appops_handlers(dp):
     dp.add_handler(CommandHandler("add_fakegps", add_fakegps))
