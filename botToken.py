@@ -34,7 +34,9 @@ def gojek(update, context):
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
-        update.message.reply_text(f"=== Token Gojek ===\n{token}")
+        update.message.reply_text(f"=== Token Gojek ===\n```{token}```",
+                                 parse_mode="Markdown"
+                                 )
     else:
         update.message.reply_text("Tidak ada token Gojek ditemukan.")
 
