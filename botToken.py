@@ -23,8 +23,8 @@ def grab(update, context):
     tokens = fetch_tokens(url)
     if tokens:
         token = random.choice(tokens)
-        update.message.reply_text(f"=== Token Grab ===\n<code>{token}</code>",
-                                 parse_mode="HTML"
+        update.message.reply_text(f"=== Token Grab ===\n`{token}`",
+                                 parse_mode="MarkdownV2"
                                  )
     else:
         update.message.reply_text("Tidak ada token Grab ditemukan.")
