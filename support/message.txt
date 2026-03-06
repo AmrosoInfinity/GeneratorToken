@@ -1,0 +1,3 @@
+start=Halo, selamat datang di AmrosolBot!
+help=Gunakan /grab atau /gojek untuk ambil token.
+about=Gua Amrosol, dah gitu aja. lamaa
