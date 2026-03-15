@@ -3,7 +3,8 @@ from zoneinfo import ZoneInfo
 from telegram import ChatPermissions
 from support import string
 
-TMP_DIR = "tmp"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TMP_DIR = os.path.join(BASE_DIR, "tmp")
 
 def tmp_file_for_user(user_id: int):
     today = datetime.date.today().isoformat()
@@ -32,7 +33,10 @@ def load_tmp(user_id):
             user_timezone = data.get("user_timezone", {})
         return user_requests, user_blocked, user_timezone
     else:
-        return {}, {}, {}
+        # Buat file kosong otomatis
+        user_requests, user_blocked, user_timezone = {}, {}, {}
+        save_tmp(user_id, user_requests, user_blocked, user_timezone)
+        return user_requests, user_blocked, user_timezone
 
 def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
     chat = update.effective_chat
