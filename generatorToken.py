@@ -37,7 +37,6 @@ def button_handler(update, context):
         query.edit_message_text("🕒 Kirim timezone Anda, contoh: `Asia/Jayapura`")
 
 def set_timezone(update, context):
-    from token_utils import user_timezone
     user_id = update.effective_user.id
     tz_name = update.message.text.strip()
     try:
@@ -53,3 +52,7 @@ def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, set_timezone))
+
+# Alias agar bot.py tetap bisa pakai nama lama
+def register_token_handlers(dp):
+    register_token_menu(dp)
