@@ -7,9 +7,10 @@ def get_message_by_id(message_id: str):
         with open("support/message.txt", "r", encoding="utf-8") as f:
             for line in f:
                 if "=" in line:
-                    key, value = line.strip().split("=", 1)
-                    if key == message_id:
-                        return value
+                    key, value = line.split("=", 1)
+                    if key.strip() == message_id:
+                        # Ambil seluruh isi setelah '=' termasuk newline
+                        return value.strip()
         return None
     except Exception as e:
         print("[DEBUG] Error membaca file:", e)
