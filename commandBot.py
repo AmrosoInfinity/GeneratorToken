@@ -1,16 +1,33 @@
 import os
 from telegram.ext import CommandHandler
 
-# Fungsi untuk membaca file message.txt dan ambil balasan sesuai id
+# Fungsi untuk membaca file message.txt dan ambil balasan sesuai id (multiline)
 def get_message_by_id(message_id: str):
     try:
         with open("support/message.txt", "r", encoding="utf-8") as f:
-            for line in f:
-                if "=" in line:
-                    key, value = line.split("=", 1)
-                    if key.strip() == message_id:
-                        # Ambil seluruh isi setelah '=' termasuk newline
-                        return value.strip()
+            lines = f.readlines()
+
+        capture = False
+        buffer = []
+        for line in lines:
+            if "=" in line:
+                key, value = line.split("=", 1)
+                key = key.strip()
+                if key == message_id:
+                    # mulai capture dari value baris ini
+                    buffer.append(value.strip())
+                    capture = True
+                else:
+                    # kalau sudah capture dan ketemu id lain, berhenti
+                    if capture:
+                        break
+            else:
+                # baris kosong atau lanjutan isi
+                if capture:
+                    buffer.append(line.rstrip())
+
+        if buffer:
+            return "\n".join(buffer).strip()
         return None
     except Exception as e:
         print("[DEBUG] Error membaca file:", e)
