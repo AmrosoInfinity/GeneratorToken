@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
-from token_utils import check_limit, fetch_tokens, user_timezone, save_tmp, load_tmp
+from token_utils import check_limit, fetch_tokens, save_tmp, load_tmp
+from support import string
 
 def token_menu(update, context):
     keyboard = [
@@ -8,50 +9,56 @@ def token_menu(update, context):
          InlineKeyboardButton("Gojek", callback_data="gojek")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("📌 Pilih token:", reply_markup=reply_markup)
+    update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
 def button_handler(update, context):
     query = update.callback_query
     user_id = query.from_user.id
     data = query.data
 
+    user_requests, user_blocked, user_timezone = load_tmp(user_id)
+
     if data in ["grab", "gojek"]:
-        load_tmp()
-        if user_id not in user_timezone:
+        if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            query.edit_message_text("⚠️ Anda belum set timezone. Silakan pilih:", reply_markup=reply_markup)
+            query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
             return
-        tz_name = user_timezone[user_id]
+
+        tz_name = user_timezone[str(user_id)]
         if data == "grab":
-            if check_limit(update, context, tz_name):
+            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/.../Grab")
-                query.edit_message_text(f"=== Token Grab ===\n```{tokens[0]}```", parse_mode="Markdown")
+                if tokens:
+                    query.edit_message_text(string.TOKEN_GRAB.format(token=tokens[0]), parse_mode="Markdown")
+                else:
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
         else:
-            if check_limit(update, context, tz_name):
+            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/.../Gojek")
-                query.edit_message_text(f"=== Token Gojek ===\n```{tokens[0]}```", parse_mode="Markdown")
+                if tokens:
+                    query.edit_message_text(string.TOKEN_GOJEK.format(token=tokens[0]), parse_mode="Markdown")
+                else:
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"))
 
     elif data == "set_timezone":
         keyboard = [
-            [InlineKeyboardButton("WIB (Asia/Jakarta)", callback_data="tz_Asia/Jakarta")],
-            [InlineKeyboardButton("WITA (Asia/Makassar)", callback_data="tz_Asia/Makassar")],
-            [InlineKeyboardButton("WIT (Asia/Jayapura)", callback_data="tz_Asia/Jayapura")]
+            [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
+            [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
+            [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        query.edit_message_text("🕒 Pilih timezone Anda:", reply_markup=reply_markup)
+        query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
 
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
-        load_tmp()
-        user_timezone[user_id] = tz_name
-        save_tmp()
-        query.edit_message_text(f"✅ Timezone Anda diset ke {tz_name}. Sekarang bisa request token.")
+        user_timezone[str(user_id)] = tz_name
+        save_tmp(user_id, user_requests, user_blocked, user_timezone)
+        query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name))
 
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
 
-# Alias agar bot.py tetap bisa pakai nama lama
 def register_token_handlers(dp):
     register_token_menu(dp)
