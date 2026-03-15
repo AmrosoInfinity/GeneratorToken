@@ -28,14 +28,14 @@ def button_handler(update, context):
         tz_name = user_timezone[str(user_id)]
         if data == "grab":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/.../Grab")
+                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     query.edit_message_text(string.TOKEN_GRAB.format(token=tokens[0]), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
         else:
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/.../Gojek")
+                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=tokens[0]), parse_mode="Markdown")
                 else:
