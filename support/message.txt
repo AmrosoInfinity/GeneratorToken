@@ -1,3 +1,19 @@
 start=Halo, selamat datang di AmrosolBot!
 help=Gunakan /grab atau /gojek untuk ambil token.
 about=Gua Amrosol, dah gitu aja. lamaa
+info=*📌 Cara Meminta Token*
+
+- Untuk **Grab** gunakan perintah: `/grab`
+- Untuk **Gojek** gunakan perintah: `/gojek`
+
+*⚠️ Batasan Permintaan*
+- Setiap user hanya bisa meminta token **maksimal 3 kali dalam 24 jam**.
+
+*🔒 Aturan Tambahan*
+- Jika bot menjadi **admin** di grup:
+  - User yang melanggar akan otomatis di-*mute* selama **2 jam**.
+  - Permintaan token dari user tersebut akan dihentikan selama **24 jam**.
+- Jika bot **bukan admin**:
+  - Bot tetap akan menghentikan respon permintaan token selama **24 jam**.
+
+Terima kasih telah menggunakan bot ini dengan bijak 🙏
