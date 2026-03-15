@@ -6,6 +6,14 @@ from telegram import ChatPermissions
 user_requests = {}
 user_blocked = {}  # simpan user yang diblokir selama 24 jam
 
+def log_request(user_id, username, count, remaining):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        with open("request.log", "a", encoding="utf-8") as f:
+            f.write(f"[{now}] User {username} (ID:{user_id}) request ke-{count}, sisa {remaining}\n")
+    except Exception as e:
+        print("[DEBUG] Gagal menulis log:", e)
+
 def check_limit(update, context):
     chat = update.effective_chat
     user = update.effective_user
@@ -28,40 +36,50 @@ def check_limit(update, context):
             # unblock otomatis setelah 24 jam
             del user_blocked[user.id]
 
-    # Cek apakah bot adalah admin
-    bot_member = context.bot.get_chat_member(chat.id, context.bot.id)
-    if bot_member.status not in ["administrator", "creator"]:
-        update.message.reply_text(
-            f"⚠️ Bot bukan admin di grup ini. Request dari {user.mention_html()} (ID: {user.id}) dihentikan.",
-            parse_mode="HTML"
-        )
-        return False
-
     today = datetime.date.today().isoformat()
     key = (user.id, today)
 
     count = user_requests.get(key, 0) + 1
     user_requests[key] = count
 
+    # Cek status bot
+    bot_member = context.bot.get_chat_member(chat.id, context.bot.id)
+    is_admin = bot_member.status in ["administrator", "creator"]
+
     if count > 3:
-        try:
-            # mute user selama 2 jam
-            until_date = datetime.datetime.now() + datetime.timedelta(hours=2)
-            context.bot.restrict_chat_member(
-                chat_id=chat.id,
-                user_id=user.id,
-                permissions=ChatPermissions(can_send_messages=False),
-                until_date=until_date
-            )
-            update.message.reply_text(
-                f"⚠️ User {user.mention_html()} (ID: {user.id}) melebihi batas 3 request per hari dan telah di-mute selama 2 jam.",
-                parse_mode="HTML"
-            )
-            # blokir request token selama 24 jam
-            user_blocked[user.id] = datetime.datetime.now() + datetime.timedelta(hours=24)
-        except Exception as e:
-            update.message.reply_text(f"Gagal mute user: {e}")
+        if is_admin:
+            try:
+                # mute user selama 2 jam
+                until_date = datetime.datetime.now() + datetime.timedelta(hours=2)
+                context.bot.restrict_chat_member(
+                    chat_id=chat.id,
+                    user_id=user.id,
+                    permissions=ChatPermissions(can_send_messages=False),
+                    until_date=until_date
+                )
+                update.message.reply_text(
+                    f"⚠️ User {user.mention_html()} (ID: {user.id}) melebihi batas 3 request per hari dan telah di-mute selama 2 jam.",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                update.message.reply_text(f"Gagal mute user: {e}")
+
+        # blokir request token selama 24 jam (baik admin maupun bukan admin)
+        user_blocked[user.id] = datetime.datetime.now() + datetime.timedelta(hours=24)
         return False
+
+    # tampilkan log request ke user
+    remaining = 3 - count
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    update.message.reply_text(
+        f"🕒 Waktu request: {now}\n"
+        f"✅ Request ke-{count} hari ini.\n"
+        f"🎯 Sisa kesempatan: {remaining if remaining >= 0 else 0}",
+        parse_mode="Markdown"
+    )
+
+    # simpan log ke file
+    log_request(user.id, user.username or user.full_name, count, remaining if remaining >= 0 else 0)
 
     return True
 
