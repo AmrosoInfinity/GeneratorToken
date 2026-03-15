@@ -1,6 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackQueryHandler, MessageHandler, Filters
-from zoneinfo import ZoneInfo
+from telegram.ext import CommandHandler, CallbackQueryHandler
 from token_utils import check_limit, fetch_tokens, user_timezone, save_tmp, load_tmp
 
 def token_menu(update, context):
@@ -34,24 +33,24 @@ def button_handler(update, context):
                 query.edit_message_text(f"=== Token Gojek ===\n```{tokens[0]}```", parse_mode="Markdown")
 
     elif data == "set_timezone":
-        query.edit_message_text("🕒 Kirim timezone Anda, contoh: `Asia/Jayapura`")
+        keyboard = [
+            [InlineKeyboardButton("WIB (Asia/Jakarta)", callback_data="tz_Asia/Jakarta")],
+            [InlineKeyboardButton("WITA (Asia/Makassar)", callback_data="tz_Asia/Makassar")],
+            [InlineKeyboardButton("WIT (Asia/Jayapura)", callback_data="tz_Asia/Jayapura")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text("🕒 Pilih timezone Anda:", reply_markup=reply_markup)
 
-def set_timezone(update, context):
-    user_id = update.effective_user.id
-    tz_name = update.message.text.strip()
-    try:
-        ZoneInfo(tz_name)  # validasi
+    elif data.startswith("tz_"):
+        tz_name = data.replace("tz_", "")
         load_tmp()
         user_timezone[user_id] = tz_name
         save_tmp()
-        update.message.reply_text(f"✅ Timezone Anda diset ke {tz_name}. Sekarang bisa request token.")
-    except Exception:
-        update.message.reply_text("❌ Timezone tidak valid. Gunakan format seperti `Asia/Jakarta`.")
+        query.edit_message_text(f"✅ Timezone Anda diset ke {tz_name}. Sekarang bisa request token.")
 
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, set_timezone))
 
 # Alias agar bot.py tetap bisa pakai nama lama
 def register_token_handlers(dp):
