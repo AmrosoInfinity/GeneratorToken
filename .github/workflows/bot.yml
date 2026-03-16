@@ -12,12 +12,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Unduh artifact dari run sebelumnya
+      # Unduh artifact dari run sebelumnya (jika ada)
       - name: Download tmp artifact
         uses: actions/download-artifact@v4
         with:
           name: tmp-data
           path: tmp
+        continue-on-error: true   # jangan gagal kalau artifact belum ada
 
       # Fallback kalau artifact belum ada (run pertama)
       - name: Buat folder tmp jika kosong
