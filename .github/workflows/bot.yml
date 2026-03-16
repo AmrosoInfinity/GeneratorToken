@@ -1,7 +1,9 @@
-name: Telegram Bot Short Run
+name: Telegram Bot
 
 on:
-  workflow_dispatch:   # bisa dipicu manual dari GitHub UI
+  schedule:
+    - cron: "0 */6 * * *"   # otomatis jalan tiap 6 jam
+  workflow_dispatch:        # bisa dipicu manual dari GitHub UI
 
 jobs:
   run-bot:
@@ -9,6 +11,17 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      # Unduh artifact dari run sebelumnya
+      - name: Download tmp artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tmp-data
+          path: tmp
+
+      # Fallback kalau artifact belum ada (run pertama)
+      - name: Buat folder tmp jika kosong
+        run: mkdir -p tmp
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -18,20 +31,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Telegram Bot (3 menit)
+      - name: Run Telegram Bot (aktif nonstop)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          # Jalankan bot di background
-          python bot.py &
-          BOT_PID=$!
-          # Biarkan hidup 180 detik (3 menit)
-          sleep 180
-          # Stop bot setelah 3 menit
-          kill $BOT_PID
+        run: python bot.py   # script ini sendiri loop polling Telegram
 
-      - name: Upload tmp data artifact
+      # Upload artifact baru di akhir job
+      - name: Upload tmp artifact
         uses: actions/upload-artifact@v4
         with:
           name: tmp-data
