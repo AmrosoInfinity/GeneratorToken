@@ -19,8 +19,8 @@ def save_tmp(user_id, user_requests, user_blocked, user_timezone):
     }
     file = tmp_file_for_user(user_id)
     with open(file, "w", encoding="utf-8") as f:
-        json.dump(data, f)
-    print(f"[DEBUG] Data tersimpan di {file}")
+        json.dump(data, f, indent=2)
+    print(f"[DEBUG] Menyimpan data user {user_id} ke {file}")
 
 def load_tmp(user_id):
     file = tmp_file_for_user(user_id)
@@ -58,9 +58,9 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
             del user_blocked[user_id]
 
     today = datetime.date.today().isoformat()
-    key = (user_id, today)
-    count = user_requests.get(str(key), 0) + 1
-    user_requests[str(key)] = count
+    key = f"{user_id}_{today}"   # perbaikan: key sederhana
+    count = user_requests.get(key, 0) + 1
+    user_requests[key] = count
 
     bot_member = context.bot.get_chat_member(chat.id, context.bot.id)
     is_admin = bot_member.status in ["administrator", "creator"]
