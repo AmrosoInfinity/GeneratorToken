@@ -67,7 +67,7 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
 
     if count > 3:
         if is_admin:
-            until_date = datetime.datetime.now(ZoneInfo(tz_name)) + datetime.timedelta(hours=2)
+            until_date = datetime.datetime.now(ZoneInfo(tz_name)) + datetime.timedelta(minutes=30)
             context.bot.restrict_chat_member(
                 chat_id=chat.id,
                 user_id=user.id,
