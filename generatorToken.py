@@ -1,4 +1,3 @@
-
 import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
@@ -20,6 +19,7 @@ def button_handler(update, context):
     user_id = query.from_user.id
     data = query.data
 
+    # selalu load data user dari tmp
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
@@ -28,6 +28,7 @@ def button_handler(update, context):
             send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
             return
 
+        # cek timezone
         if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -43,8 +44,8 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
-                # simpan setiap interaksi
-                save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            # simpan setiap interaksi
+            save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
         elif data == "gojek":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
@@ -54,8 +55,8 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"))
-                # simpan setiap interaksi
-                save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            # simpan setiap interaksi
+            save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
     elif data == "set_timezone":
         keyboard = [
