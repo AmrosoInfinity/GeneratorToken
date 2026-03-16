@@ -14,7 +14,7 @@ info=*📌 Cara Meminta Token*
 
 *🔒 Aturan Tambahan*
 - Jika bot menjadi *admin* di grup:
-  - User yang melanggar akan otomatis di-*mute* selama **2 jam**.
+  - User yang melanggar akan otomatis di-*mute* selama **30 menit**.
   - Permintaan token dari user tersebut akan dihentikan selama **24 jam**.
 - Jika bot *bukan admin*:
   - Bot tetap akan menghentikan respon permintaan token selama **24 jam**.
