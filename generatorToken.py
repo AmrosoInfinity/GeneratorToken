@@ -1,3 +1,4 @@
+
 import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
@@ -42,6 +43,9 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
+                # simpan setiap interaksi
+                save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
         elif data == "gojek":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
@@ -50,6 +54,8 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"))
+                # simpan setiap interaksi
+                save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
     elif data == "set_timezone":
         keyboard = [
