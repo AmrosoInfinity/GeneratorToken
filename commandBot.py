@@ -59,7 +59,7 @@ def about(update, context):
 def info(update, context):
     chat = update.effective_chat
     if chat.type not in ["group", "supergroup"]:
-        send_group_only_message(update, "⚠️ Command /info hanya bisa digunakan di dalam grup.")
+        send_group_only_message(update, "⚠️ Command /info berisi instruksi permintaan token grab/gojek dan hanya bisa digunakan di dalam grup.")
         return
 
     msg = get_message_by_id("info")
