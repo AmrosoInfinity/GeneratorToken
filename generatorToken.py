@@ -2,6 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
 from token_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
+from button_utils import send_group_only_message
 
 def token_menu(update, context):
     keyboard = [
@@ -13,12 +14,18 @@ def token_menu(update, context):
 
 def button_handler(update, context):
     query = update.callback_query
+    chat = update.effective_chat
     user_id = query.from_user.id
     data = query.data
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
+        # cek group only
+        if chat.type not in ["group", "supergroup"]:
+            send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
+            return
+
         if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
