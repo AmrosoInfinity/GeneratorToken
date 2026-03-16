@@ -20,13 +20,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Telegram Bot
+      - name: Run Telegram Bot (5 menit)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: python bot.py
+        run: timeout 300 python bot.py   # stop setelah 300 detik (5 menit)
 
       - name: Upload tmp data
+        if: always()   # pastikan tetap jalan meskipun step sebelumnya timeout/error
         uses: actions/upload-artifact@v4
         with:
           name: tmp-data
