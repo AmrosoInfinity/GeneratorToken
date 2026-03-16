@@ -1,5 +1,6 @@
 import os
 from telegram.ext import CommandHandler
+from button_utils import send_group_only_message   # import utilitas tombol
 
 # Fungsi untuk membaca file message.txt dan ambil balasan sesuai id (multiline)
 def get_message_by_id(message_id: str):
@@ -14,15 +15,12 @@ def get_message_by_id(message_id: str):
                 key, value = line.split("=", 1)
                 key = key.strip()
                 if key == message_id:
-                    # mulai capture dari value baris ini
                     buffer.append(value.strip())
                     capture = True
                 else:
-                    # kalau sudah capture dan ketemu id lain, berhenti
                     if capture:
                         break
             else:
-                # baris kosong atau lanjutan isi
                 if capture:
                     buffer.append(line.rstrip())
 
@@ -57,11 +55,11 @@ def about(update, context):
     else:
         update.message.reply_text("Pesan untuk 'about' tidak ditemukan.")
 
-# Handler untuk command /info (hanya di grup)
+# Handler untuk command /info (hanya di grup, kalau private tampilkan tombol)
 def info(update, context):
     chat = update.effective_chat
     if chat.type not in ["group", "supergroup"]:
-        update.message.reply_text("Command /info hanya bisa digunakan di dalam grup.")
+        send_group_only_message(update, "⚠️ Command /info hanya bisa digunakan di dalam grup.")
         return
 
     msg = get_message_by_id("info")
