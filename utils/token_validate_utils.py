@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 from telegram import ChatPermissions
 from support import string
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
 TMP_DIR = os.path.join(BASE_DIR, "tmp")
 
 def tmp_file_for_user(user_id: int):
