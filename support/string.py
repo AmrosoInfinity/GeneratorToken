@@ -17,4 +17,5 @@ TOKEN_NOT_FOUND = "Tidak ada token {service} ditemukan."
 
 LIMIT_BLOCKED = "⚠️ User {mention} (ID: {id}) sedang diblokir hingga {until}."
 LIMIT_EXCEEDED = "⚠️ User {mention} (ID: {id}) melebihi batas 3 request per hari dan telah di-mute selama 30 menit."
+LIMIT_MUTE_FAILED = "⚠️ Tidak bisa mute {mention} (id={id}), kemungkinan owner/admin utama."
 LIMIT_INFO = "🕒 Waktu request: {now}\n✅ Request ke-{count} hari ini.\n🎯 Sisa kesempatan: {remaining}"
