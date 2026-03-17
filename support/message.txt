@@ -23,6 +23,7 @@ info=*📌 Cara Meminta Token*
 🗓️ 17-03-2026 01.17 WIB
 📝 Fix feature
 - client issues
+- time.sleep(2) #Pause 2 seconds before displaying tokens
 
 
 🙏 Gunakan bot ini dengan bijak agar semua member bisa terbantu.
