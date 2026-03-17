@@ -1,24 +1,41 @@
 import os
-from telegram.ext import ApplicationBuilder
+import logging
+from telegram.ext import Updater
 from generatorToken import register_token_handlers
 from chatOpenAi import register_chat_handlers
 from appopsPermission import register_appops_handlers
 from commandBot import register_command_handlers
 
 def main():
+    # Setup logging (akan tampil di console GitHub Actions)
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.DEBUG
+    )
+    logger = logging.getLogger(__name__)
+
+    # Ambil token dari environment variable
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise ValueError("⚠️ TELEGRAM_BOT_TOKEN belum diset di environment.")
+    logger.debug("Token terbaca, panjang: %d", len(token))
 
-    app = ApplicationBuilder().token(token).build()
+    # Inisialisasi updater dan dispatcher
+    updater = Updater(token, use_context=True)
+    dp = updater.dispatcher
 
-    register_token_handlers(app)
-    register_chat_handlers(app)
-    register_appops_handlers(app)
-    register_command_handlers(app)
+    # Register semua handler dari modul terpisah
+    logger.debug("Registering handlers...")
+    register_token_handlers(dp)       # tombol /token (Grab/Gojek + timezone)
+    register_chat_handlers(dp)        # modul chatOpenAi
+    register_appops_handlers(dp)      # modul appopsPermission
+    register_command_handlers(dp)     # modul commandBot
+    logger.debug("Handlers registered.")
 
+    # Jalankan bot
     print("🤖 Bot sudah berjalan... tekan Ctrl+C untuk berhenti.")
-    app.run_polling()
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
     main()
