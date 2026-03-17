@@ -1,6 +1,6 @@
 import os
 from telegram.ext import CommandHandler
-from button_utils import send_group_only_message   # import utilitas tombol
+from button_utils import send_group_only_message   # utilitas tombol
 
 # Fungsi untuk membaca file message.txt dan ambil balasan sesuai id (multiline)
 def get_message_by_id(message_id: str):
@@ -64,7 +64,18 @@ def info(update, context):
 
     msg = get_message_by_id("info")
     if msg:
-        update.message.reply_text(msg, parse_mode="Markdown")
+        gif_path = os.path.join("support", "media1.gif")
+        try:
+            with open(gif_path, "rb") as gif_file:
+                context.bot.send_animation(
+                    chat_id=chat.id,
+                    animation=gif_file,
+                    caption=msg,
+                    parse_mode="Markdown"
+                )
+        except Exception as e:
+            print("[DEBUG] Error kirim GIF:", e)
+            update.message.reply_text(msg, parse_mode="Markdown")
     else:
         update.message.reply_text("Pesan untuk 'info' tidak ditemukan.")
 
