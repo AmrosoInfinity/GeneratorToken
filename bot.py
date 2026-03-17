@@ -1,5 +1,5 @@
 import os
-from telegram.ext import Updater
+from telegram.ext import ApplicationBuilder
 from generatorToken import register_token_handlers
 from chatOpenAi import register_chat_handlers
 from appopsPermission import register_appops_handlers
@@ -11,20 +11,18 @@ def main():
     if not token:
         raise ValueError("⚠️ TELEGRAM_BOT_TOKEN belum diset di environment.")
 
-    # Inisialisasi updater dan dispatcher
-    updater = Updater(token, use_context=True)
-    dp = updater.dispatcher
+    # Inisialisasi Application (pengganti Updater)
+    app = ApplicationBuilder().token(token).build()
 
     # Register semua handler dari modul terpisah
-    register_token_handlers(dp)       # tombol /token (Grab/Gojek + timezone)
-    register_chat_handlers(dp)        # modul chatOpenAi
-    register_appops_handlers(dp)      # modul appopsPermission
-    register_command_handlers(dp)     # modul commandBot
+    register_token_handlers(app)       # tombol /token (Grab/Gojek + timezone)
+    register_chat_handlers(app)        # modul chatOpenAi
+    register_appops_handlers(app)      # modul appopsPermission
+    register_command_handlers(app)     # modul commandBot
 
     # Jalankan bot
     print("🤖 Bot sudah berjalan... tekan Ctrl+C untuk berhenti.")
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
