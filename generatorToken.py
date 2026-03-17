@@ -2,9 +2,9 @@ import time
 import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
-from token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
+from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
-from button_group_utils import send_group_only_message
+from utils.button_group_utils import send_group_only_message
 
 def token_menu(update, context):
     keyboard = [
