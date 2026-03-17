@@ -1,8 +1,7 @@
 import os
 from telegram.ext import CommandHandler
-from button_utils import send_group_only_message   # utilitas tombol
+from button_utils import get_group_only_buttons   # utilitas tombol
 
-# Fungsi untuk membaca file message.txt dan ambil balasan sesuai id (multiline)
 def get_message_by_id(message_id: str):
     try:
         with open("support/message.txt", "r", encoding="utf-8") as f:
@@ -31,53 +30,52 @@ def get_message_by_id(message_id: str):
         print("[DEBUG] Error membaca file:", e)
         return None
 
-# Handler untuk command /start
 def start(update, context):
     msg = get_message_by_id("start")
-    if msg:
-        update.message.reply_text(msg, parse_mode="Markdown")
-    else:
-        update.message.reply_text("Pesan untuk 'start' tidak ditemukan.")
+    update.message.reply_text(msg or "Pesan untuk 'start' tidak ditemukan.", parse_mode="Markdown")
 
-# Handler untuk command /help
 def help_command(update, context):
     msg = get_message_by_id("help")
-    if msg:
-        update.message.reply_text(msg, parse_mode="Markdown")
-    else:
-        update.message.reply_text("Pesan untuk 'help' tidak ditemukan.")
+    update.message.reply_text(msg or "Pesan untuk 'help' tidak ditemukan.", parse_mode="Markdown")
 
-# Handler untuk command /about
 def about(update, context):
     msg = get_message_by_id("about")
-    if msg:
-        update.message.reply_text(msg, parse_mode="Markdown")
-    else:
-        update.message.reply_text("Pesan untuk 'about' tidak ditemukan.")
+    update.message.reply_text(msg or "Pesan untuk 'about' tidak ditemukan.", parse_mode="Markdown")
 
-# Handler untuk command /info (hanya di grup, kalau private tampilkan tombol)
 def info(update, context):
     chat = update.effective_chat
-    if chat.type not in ["group", "supergroup"]:
-        send_group_only_message(update, "⚠️ Command /info berisi instruksi permintaan token grab/gojek dan hanya bisa digunakan di dalam grup.")
+    msg = get_message_by_id("info")
+
+    if not msg:
+        update.message.reply_text("Pesan untuk 'info' tidak ditemukan.")
         return
 
-    msg = get_message_by_id("info")
-    if msg:
-        gif_path = os.path.join("support", "media1.gif")
-        try:
-            with open(gif_path, "rb") as gif_file:
+    gif_path = os.path.join("support", "media1.gif")
+    try:
+        with open(gif_path, "rb") as gif_file:
+            # jika private chat → tambahkan tombol
+            if chat.type == "private":
+                context.bot.send_animation(
+                    chat_id=chat.id,
+                    animation=gif_file,
+                    caption=msg,
+                    parse_mode="Markdown",
+                    reply_markup=get_group_only_buttons()
+                )
+            else:
+                # jika group/supergroup → kirim tanpa tombol
                 context.bot.send_animation(
                     chat_id=chat.id,
                     animation=gif_file,
                     caption=msg,
                     parse_mode="Markdown"
                 )
-        except Exception as e:
-            print("[DEBUG] Error kirim GIF:", e)
+    except Exception as e:
+        print("[DEBUG] Error kirim GIF:", e)
+        if chat.type == "private":
+            update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_group_only_buttons())
+        else:
             update.message.reply_text(msg, parse_mode="Markdown")
-    else:
-        update.message.reply_text("Pesan untuk 'info' tidak ditemukan.")
 
 def register_command_handlers(dp):
     dp.add_handler(CommandHandler("start", start))
