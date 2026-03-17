@@ -88,7 +88,6 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
         string.LIMIT_INFO.format(now=now, count=count, remaining=remaining),
         parse_mode="Markdown"
     )
-    time.sleep(2)
     save_tmp(user_id, user_requests, user_blocked, user_timezone)
     return True
 
