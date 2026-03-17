@@ -32,11 +32,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Telegram Bot (aktif nonstop)
+      - name: Run Telegram Bot (5 jam 50 menit)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: python bot.py   # script ini sendiri loop polling Telegram
+        run: |
+          # Jalankan bot di background
+          python bot.py &
+          BOT_PID=$!
+          # Biarkan hidup 5 jam 57 menit (21420 detik)
+          sleep 21420
+          # Stop bot sebelum limit 6 jam tercapai
+          kill $BOT_PID
 
       # Upload artifact baru di akhir job
       - name: Upload tmp artifact
