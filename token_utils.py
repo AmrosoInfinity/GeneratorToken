@@ -78,6 +78,13 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
                 string.LIMIT_EXCEEDED.format(mention=user.mention_html(), id=user.id),
                 parse_mode="HTML"
             )
+            except Exception as e:
+            print("[DEBUG] Gagal mute:", e)
+            # gunakan pesan dari string.py untuk gagal mute
+            update.callback_query.edit_message_text(
+                string.LIMIT_MUTE_FAILED.format(mention=user.mention_html(), id=user.id),
+                parse_mode="HTML"
+            )
         user_blocked[user_id] = datetime.datetime.now(ZoneInfo(tz_name)) + datetime.timedelta(hours=24)
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         return False
