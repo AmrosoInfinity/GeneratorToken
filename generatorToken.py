@@ -41,6 +41,7 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     chosen = random.choice(tokens)
+                    time.sleep(2)
                     query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
@@ -52,6 +53,7 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
+                    time.sleep(2)
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"))
