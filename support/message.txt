@@ -1,10 +1,10 @@
 start=Halo, selamat datang di AmrosolBot!
 help=Gunakan /grab atau /gojek untuk ambil token.
 about=Gua Amrosol, dah gitu aja. lamaa
-info=*📌 Cara Meminta Token*
-- Untuk request token grab atau gojek gunakan perintah '/token'
-- Pilih *Grab* untuk mendapatkan token grab
-- Pilih *Gojek* untuk mendapatkan token gojek
+info=**> *📌 Cara Meminta Token*
+> - Untuk request token grab atau gojek gunakan perintah '/token'
+> - Pilih *Grab* untuk mendapatkan token grab
+> - Pilih *Gojek* untuk mendapatkan token gojek:
 
 *📍 Menambahkan Timezone*
 - Metode request saat ini menggunakan zona waktu untuk menyimpan data request agar dapat membatasi permintaan berlebihan.
