@@ -11,13 +11,18 @@ info= *📌 Cara Meminta Token*
 - Metode request saat ini menggunakan zona waktu untuk menyimpan data request agar dapat membatasi permintaan berlebihan.
 
 *⚠️ Batasan Permintaan*
-- Setiap user hanya bisa meminta token **maksimal 3 kali dalam 6 jam**.
+- Setiap user hanya bisa meminta token **maksimal 3 kali dalam 12 jam**.
 
 *🔒 Aturan Tambahan*
 - Jika bot menjadi *admin* di grup:
   - User yang melanggar akan otomatis di-*mute* selama **30 menit**.
-  - Permintaan token dari user tersebut akan dihentikan selama **6 jam**.
+  - Permintaan token dari user tersebut akan dihentikan selama **12 jam**.
 - Jika bot *bukan admin*:
-  - Bot tetap akan menghentikan respon permintaan token selama **6 jam**.
+  - Bot tetap akan menghentikan respon permintaan token selama **12 jam**.
+
+♻️ *Update* Final🎉
+⏳ *2026-3-19 20:40WIB*
+📜 *Fix Feature*
+- Client issue Limit 12 hours
 
 🙏 Gunakan bot ini dengan bijak agar semua member bisa terbantu.
