@@ -3,18 +3,18 @@ from zoneinfo import ZoneInfo
 from telegram import ChatPermissions
 from support import string
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TMP_DIR = os.path.join(BASE_DIR, "tmp")
 
 def tmp_file_for_user(user_id: int):
-    today = datetime.date.today().isoformat()
-    return os.path.join(TMP_DIR, f"user_{user_id}_{today}.json")
+    # gunakan satu file per user, tanpa tanggal
+    return os.path.join(TMP_DIR, f"user_{user_id}.json")
 
 def save_tmp(user_id, user_requests, user_blocked, user_timezone):
     os.makedirs(TMP_DIR, exist_ok=True)
     data = {
         "user_requests": user_requests,
-        "user_blocked": {uid: until.isoformat() for uid, until in user_blocked.items()},
+        "user_blocked": {str(uid): until.isoformat() for uid, until in user_blocked.items()},
         "user_timezone": user_timezone
     }
     file = tmp_file_for_user(user_id)
@@ -31,6 +31,7 @@ def load_tmp(user_id):
             user_blocked = {int(uid): datetime.datetime.fromisoformat(until)
                             for uid, until in data.get("user_blocked", {}).items()}
             user_timezone = data.get("user_timezone", {})
+        print(f"[DEBUG] Loaded data user {user_id}: {data}")
         return user_requests, user_blocked, user_timezone
     else:
         user_requests, user_blocked, user_timezone = {}, {}, {}
@@ -58,7 +59,7 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
         else:
             del user_blocked[user_id]
 
-    # hitung request harian
+    # hitung request harian (key tetap pakai tanggal agar limit reset tiap hari)
     today = datetime.date.today().isoformat()
     key = f"{user_id}_{today}"
     count = user_requests.get(key, 0) + 1
@@ -89,7 +90,7 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
                     parse_mode="HTML"
                 )
 
-        # tetap blokir user secara internal
+        # tetap blokir user secara internal selama 12 jam
         user_blocked[user_id] = datetime.datetime.now(ZoneInfo(tz_name)) + datetime.timedelta(hours=12)
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         return False
