@@ -2,8 +2,12 @@ name: Telegram Bot
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # otomatis jalan tiap 6 jam
-  workflow_dispatch:        # bisa dipicu manual dari GitHub UI
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   run-bot:
@@ -11,18 +15,13 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
-      # Unduh artifact dari run sebelumnya (jika ada)
-      - name: Download tmp artifact
-        uses: actions/download-artifact@v4
         with:
-          name: tmp-data
-          path: tmp
-        continue-on-error: true   # jangan gagal kalau artifact belum ada
+          fetch-depth: 0
 
-      # Fallback kalau artifact belum ada (run pertama)
-      - name: Buat folder tmp jika kosong
-        run: mkdir -p tmp
+      - name: Restore tmp folder if present
+        run: |
+          mkdir -p tmp
+          # tmp sudah ada di repo setelah checkout jika sebelumnya di-commit
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -32,22 +31,20 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Telegram Bot (5 jam 50 menit)
+      - name: Run Telegram Bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          # Jalankan bot di background
           python bot.py &
           BOT_PID=$!
-          # Biarkan hidup 5 jam 57 menit (21420 detik)
           sleep 21420
-          # Stop bot sebelum limit 6 jam tercapai
           kill $BOT_PID
 
-      # Upload artifact baru di akhir job
-      - name: Upload tmp artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tmp-data
-          path: tmp/
+      - name: Commit tmp folder to repo
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add tmp/
+          git commit -m "Update tmp data from workflow run" || echo "No changes to commit"
+          git push
