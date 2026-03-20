@@ -20,9 +20,4 @@ info= *📌 Cara Meminta Token*
 - Jika bot *bukan admin*:
   - Bot tetap akan menghentikan respon permintaan token selama **12 jam**.
 
-♻️ *Update* Final🎉
-⏳ *2026-3-19 20:55WIB*
-📜 *Fix Feature*
-- Client issue Limit 12 hours
-
 🙏 Gunakan bot ini dengan bijak agar semua member bisa terbantu.
