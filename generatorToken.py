@@ -35,6 +35,7 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
+    # catat owner tombol baru
     active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
     set_expire_timer(context, msg.chat_id, msg.message_id, update.effective_user.id)
 
@@ -61,6 +62,7 @@ def button_handler(update, context):
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
+            # catat owner tombol baru
             active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
             set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
             return
@@ -99,6 +101,7 @@ def button_handler(update, context):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
+        # catat owner tombol baru
         active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
         set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
 
