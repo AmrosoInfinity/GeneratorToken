@@ -30,7 +30,7 @@ def token_menu(update, context):
                 context.bot.edit_message_text(
                     chat_id=msg.chat_id,
                     message_id=msg.message_id,
-                    text=string.NO_SELECTION_MSG,   # sudah berisi "Anda tidak memilih apapun 🙄"
+                    text=string.NO_SELECTION_MSG,  
                     parse_mode="Markdown"
                 )
             except Exception:
@@ -49,7 +49,6 @@ def button_handler(update, context):
 
     state = active_button_owner.get(message_id)
     if state and state["owner"] != user_id:
-        # gunakan markdown + emoticon untuk pesan "token ini bukan untukmu🥱"
         query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
         return
 
