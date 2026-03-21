@@ -30,7 +30,8 @@ def token_menu(update, context):
                 context.bot.edit_message_text(
                     chat_id=msg.chat_id,
                     message_id=msg.message_id,
-                    text=string.NO_SELECTION_MSG
+                    text=string.NO_SELECTION_MSG,   # sudah berisi "Anda tidak memilih apapun 🙄"
+                    parse_mode="Markdown"
                 )
             except Exception:
                 pass
@@ -48,7 +49,8 @@ def button_handler(update, context):
 
     state = active_button_owner.get(message_id)
     if state and state["owner"] != user_id:
-        query.answer("Tombol ini bukan untukmu.", show_alert=True)
+        # gunakan markdown + emoticon untuk pesan "token ini bukan untukmu🥱"
+        query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
         return
 
     # selalu load data user dari tmp
@@ -74,7 +76,7 @@ def button_handler(update, context):
                     time.sleep(2)
                     query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                 else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
         elif data == "gojek":
@@ -85,7 +87,7 @@ def button_handler(update, context):
                     time.sleep(2)
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                 else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"))
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
         # setelah user memilih, hapus kepemilikan tombol
@@ -105,7 +107,7 @@ def button_handler(update, context):
         tz_name = data.replace("tz_", "")
         user_timezone[str(user_id)] = tz_name
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
-        query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name))
+        query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
 
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
