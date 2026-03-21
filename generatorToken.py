@@ -47,9 +47,14 @@ def button_handler(update, context):
     message_id = query.message.message_id
 
     state = active_button_owner.get(message_id)
-    if state and state["owner"] != user_id:
-        query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
-        return
+
+    # cek kepemilikan tombol
+    if state:
+        if state["owner"] != user_id:
+            # izinkan jika user anonim (anonymous admin)
+            if not getattr(query.from_user, "is_anonymous", False):
+                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
+                return
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
@@ -67,7 +72,7 @@ def button_handler(update, context):
             set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
             return
 
-        tz_name = user_timezone[str(user_id)]
+        tz_name = user_timezone.get(str(user_id))
         if data == "grab":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
