@@ -7,7 +7,7 @@ from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load
 from support import string
 from utils.button_group_utils import send_group_only_message
 
-# mapping message_id -> {owner: user_id, expired: bool, anonymous: bool}
+# mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
 def set_expire_timer(context, chat_id, message_id):
@@ -19,7 +19,7 @@ def set_expire_timer(context, chat_id, message_id):
                 context.bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=message_id,
-                    text=string.NO_SELECTION_MSG,  
+                    text=string.NO_SELECTION_MSG,   # "Anda tidak memilih apapun 🙄"
                     parse_mode="Markdown"
                 )
             except Exception:
@@ -35,11 +35,10 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    # catat owner tombol baru, termasuk status anonim
+    # catat owner tombol baru
     active_button_owner[msg.message_id] = {
         "owner": update.effective_user.id,
-        "expired": False,
-        "anonymous": getattr(update.effective_user, "is_anonymous", False)
+        "expired": False
     }
     set_expire_timer(context, msg.chat_id, msg.message_id)
 
@@ -55,9 +54,11 @@ def button_handler(update, context):
     # cek kepemilikan tombol
     if state:
         if state["owner"] != user_id:
-            # izinkan jika pemicu adalah admin anonim
-            if not getattr(query.from_user, "is_anonymous", False) or not state.get("anonymous", False):
-                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True) 
+            # ambil daftar admin untuk cek anonymous
+            admins = context.bot.get_chat_administrators(chat.id)
+            anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
+            if user_id not in anon_ids:
+                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
                 return
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
@@ -74,8 +75,7 @@ def button_handler(update, context):
             # catat owner tombol baru
             active_button_owner[msg.message_id] = {
                 "owner": user_id,
-                "expired": False,
-                "anonymous": getattr(query.from_user, "is_anonymous", False)
+                "expired": False
             }
             set_expire_timer(context, msg.chat_id, msg.message_id)
             return
@@ -117,8 +117,7 @@ def button_handler(update, context):
         # catat owner tombol baru
         active_button_owner[msg.message_id] = {
             "owner": user_id,
-            "expired": False,
-            "anonymous": getattr(query.from_user, "is_anonymous", False)
+            "expired": False
         }
         set_expire_timer(context, msg.chat_id, msg.message_id)
 
