@@ -1,10 +1,14 @@
 import time
 import random
+import threading
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
 from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
 from utils.button_group_utils import send_group_only_message
+
+# mapping message_id -> user_id
+active_button_owner = {}
 
 def token_menu(update, context):
     keyboard = [
@@ -12,24 +16,49 @@ def token_menu(update, context):
          InlineKeyboardButton("Gojek", callback_data="gojek")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
+    msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
+
+    # tandai tombol ini milik user pemicu
+    active_button_owner[msg.message_id] = update.effective_user.id
+
+    # jalankan timer 60 detik untuk auto-expire
+    def expire_button():
+        time.sleep(60)
+        owner = active_button_owner.get(msg.message_id)
+        if owner == update.effective_user.id:
+            try:
+                context.bot.edit_message_text(
+                    chat_id=msg.chat_id,
+                    message_id=msg.message_id,
+                    text=string.NO_SELECTION_MSG
+                )
+            except Exception:
+                pass
+            active_button_owner.pop(msg.message_id, None)
+
+    threading.Thread(target=expire_button, daemon=True).start()
 
 def button_handler(update, context):
     query = update.callback_query
     chat = update.effective_chat
     user_id = query.from_user.id
     data = query.data
+    message_id = query.message.message_id
+
+    # cek apakah tombol ini milik user pemicu
+    owner = active_button_owner.get(message_id)
+    if owner is not None and owner != user_id:
+        query.answer("Tombol ini bukan untukmu.", show_alert=True)
+        return
 
     # selalu load data user dari tmp
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
-        # cek group only
         if chat.type not in ["group", "supergroup"]:
             send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
             return
 
-        # cek timezone
         if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -46,7 +75,6 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"))
-            # simpan setiap interaksi
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
         elif data == "gojek":
@@ -58,8 +86,10 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"))
-            # simpan setiap interaksi
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
+        # setelah user memilih, hapus kepemilikan tombol
+        active_button_owner.pop(message_id, None)
 
     elif data == "set_timezone":
         keyboard = [
