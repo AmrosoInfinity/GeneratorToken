@@ -7,7 +7,7 @@ from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load
 from support import string
 from utils.button_group_utils import send_group_only_message
 
-# mapping message_id -> user_id
+# mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
 def token_menu(update, context):
@@ -19,13 +19,13 @@ def token_menu(update, context):
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
     # tandai tombol ini milik user pemicu
-    active_button_owner[msg.message_id] = update.effective_user.id
+    active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
 
     # jalankan timer 60 detik untuk auto-expire
     def expire_button():
         time.sleep(60)
-        owner = active_button_owner.get(msg.message_id)
-        if owner == update.effective_user.id:
+        state = active_button_owner.get(msg.message_id)
+        if state and not state["expired"]:
             try:
                 context.bot.edit_message_text(
                     chat_id=msg.chat_id,
@@ -34,7 +34,8 @@ def token_menu(update, context):
                 )
             except Exception:
                 pass
-            active_button_owner.pop(msg.message_id, None)
+            # tandai expired tapi jangan hapus owner
+            state["expired"] = True
 
     threading.Thread(target=expire_button, daemon=True).start()
 
@@ -45,9 +46,8 @@ def button_handler(update, context):
     data = query.data
     message_id = query.message.message_id
 
-    # cek apakah tombol ini milik user pemicu
-    owner = active_button_owner.get(message_id)
-    if owner is not None and owner != user_id:
+    state = active_button_owner.get(message_id)
+    if state and state["owner"] != user_id:
         query.answer("Tombol ini bukan untukmu.", show_alert=True)
         return
 
@@ -89,7 +89,8 @@ def button_handler(update, context):
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
         # setelah user memilih, hapus kepemilikan tombol
-        active_button_owner.pop(message_id, None)
+        if state:
+            active_button_owner.pop(message_id, None)
 
     elif data == "set_timezone":
         keyboard = [
