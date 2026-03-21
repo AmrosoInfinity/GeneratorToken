@@ -4,7 +4,8 @@ TOKEN_MENU_TEXT = "📌 Pilih token:"
 
 NEED_TIMEZONE_TEXT = "⚠️ Anda belum set timezone. Silakan pilih:"
 CHOOSE_TIMEZONE_TEXT = "🕒 Pilih timezone Anda:"
-NO_SELECTION_MSG = "Anda tidak memilih apapun"
+NO_SELECTION_MSG = "Anda tidak memilih apapun 🙄"
+NOT_YOUR_BUTTON_MSG = "Tombol ini bukan untukmu 🥱" 
 
 TIMEZONE_WIB = "WIB (Asia/Jakarta)"
 TIMEZONE_WITA = "WITA (Asia/Makassar)"
