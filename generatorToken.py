@@ -7,10 +7,10 @@ from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load
 from support import string
 from utils.button_group_utils import send_group_only_message
 
-# mapping message_id -> {owner: user_id, expired: bool}
+# mapping message_id -> {owner: user_id, expired: bool, anonymous: bool}
 active_button_owner = {}
 
-def set_expire_timer(context, chat_id, message_id, owner_id):
+def set_expire_timer(context, chat_id, message_id):
     def expire_button():
         time.sleep(60)
         state = active_button_owner.get(message_id)
@@ -35,9 +35,13 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    # catat owner tombol baru
-    active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
-    set_expire_timer(context, msg.chat_id, msg.message_id, update.effective_user.id)
+    # catat owner tombol baru, termasuk status anonim
+    active_button_owner[msg.message_id] = {
+        "owner": update.effective_user.id,
+        "expired": False,
+        "anonymous": getattr(update.effective_user, "is_anonymous", False)
+    }
+    set_expire_timer(context, msg.chat_id, msg.message_id)
 
 def button_handler(update, context):
     query = update.callback_query
@@ -51,8 +55,8 @@ def button_handler(update, context):
     # cek kepemilikan tombol
     if state:
         if state["owner"] != user_id:
-            # izinkan jika user anonim (anonymous admin)
-            if not getattr(query.from_user, "is_anonymous", False):
+            # izinkan jika pemicu adalah admin anonim
+            if not getattr(query.from_user, "is_anonymous", False) or not state.get("anonymous", False):
                 query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
                 return
 
@@ -68,8 +72,12 @@ def button_handler(update, context):
             reply_markup = InlineKeyboardMarkup(keyboard)
             msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
             # catat owner tombol baru
-            active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
-            set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
+            active_button_owner[msg.message_id] = {
+                "owner": user_id,
+                "expired": False,
+                "anonymous": getattr(query.from_user, "is_anonymous", False)
+            }
+            set_expire_timer(context, msg.chat_id, msg.message_id)
             return
 
         tz_name = user_timezone.get(str(user_id))
@@ -107,8 +115,12 @@ def button_handler(update, context):
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
         # catat owner tombol baru
-        active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
-        set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
+        active_button_owner[msg.message_id] = {
+            "owner": user_id,
+            "expired": False,
+            "anonymous": getattr(query.from_user, "is_anonymous", False)
+        }
+        set_expire_timer(context, msg.chat_id, msg.message_id)
 
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
