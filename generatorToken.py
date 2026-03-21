@@ -10,6 +10,23 @@ from utils.button_group_utils import send_group_only_message
 # mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
+def set_expire_timer(context, chat_id, message_id, owner_id):
+    def expire_button():
+        time.sleep(60)
+        state = active_button_owner.get(message_id)
+        if state and not state["expired"]:
+            try:
+                context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    text=string.NO_SELECTION_MSG,   # "Anda tidak memilih apapun 🙄"
+                    parse_mode="Markdown"
+                )
+            except Exception:
+                pass
+            state["expired"] = True
+    threading.Thread(target=expire_button, daemon=True).start()
+
 def token_menu(update, context):
     keyboard = [
         [InlineKeyboardButton("Grab", callback_data="grab"),
@@ -18,27 +35,8 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    # tandai tombol ini milik user pemicu
     active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
-
-    # jalankan timer 60 detik untuk auto-expire
-    def expire_button():
-        time.sleep(60)
-        state = active_button_owner.get(msg.message_id)
-        if state and not state["expired"]:
-            try:
-                context.bot.edit_message_text(
-                    chat_id=msg.chat_id,
-                    message_id=msg.message_id,
-                    text=string.NO_SELECTION_MSG,  
-                    parse_mode="Markdown"
-                )
-            except Exception:
-                pass
-            # tandai expired tapi jangan hapus owner
-            state["expired"] = True
-
-    threading.Thread(target=expire_button, daemon=True).start()
+    set_expire_timer(context, msg.chat_id, msg.message_id, update.effective_user.id)
 
 def button_handler(update, context):
     query = update.callback_query
@@ -49,10 +47,9 @@ def button_handler(update, context):
 
     state = active_button_owner.get(message_id)
     if state and state["owner"] != user_id:
-        query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
+        query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
         return
 
-    # selalu load data user dari tmp
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
@@ -63,7 +60,9 @@ def button_handler(update, context):
         if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
+            msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
+            active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
+            set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
             return
 
         tz_name = user_timezone[str(user_id)]
@@ -89,7 +88,6 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
-        # setelah user memilih, hapus kepemilikan tombol
         if state:
             active_button_owner.pop(message_id, None)
 
@@ -100,13 +98,17 @@ def button_handler(update, context):
             [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
+        msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
+        active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
+        set_expire_timer(context, msg.chat_id, msg.message_id, user_id)
 
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
         user_timezone[str(user_id)] = tz_name
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
+        if state:
+            active_button_owner.pop(message_id, None)
 
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
