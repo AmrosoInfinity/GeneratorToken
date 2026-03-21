@@ -19,7 +19,7 @@ def set_expire_timer(context, chat_id, message_id):
                 context.bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=message_id,
-                    text=string.NO_SELECTION_MSG,   # "Anda tidak memilih apapun 🙄"
+                    text=string.NO_SELECTION_MSG,  
                     parse_mode="Markdown"
                 )
             except Exception:
@@ -57,7 +57,7 @@ def button_handler(update, context):
         if state["owner"] != user_id:
             # izinkan jika pemicu adalah admin anonim
             if not getattr(query.from_user, "is_anonymous", False) or not state.get("anonymous", False):
-                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
+                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True) 
                 return
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
