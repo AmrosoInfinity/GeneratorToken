@@ -10,15 +10,21 @@ info= *📌 Cara Meminta Token*
 *📍 Menambahkan Timezone*
 - Metode request saat ini menggunakan zona waktu untuk menyimpan data request agar dapat membatasi permintaan berlebihan.
 
+*🔘 Menambahkan Kepemilikan Tombol*
+- Tombol *Grab Gojek dan Set Lokasi* saat command */token* dipanggil adalah milik User. Terdapat batasan waktu 60 detik saat tombol on display. 
+
 *⚠️ Batasan Permintaan*
 - Setiap user hanya bisa meminta token **maksimal 3 kali dalam 12 jam**.
 
 *🔒 Aturan Tambahan*
 - Jika bot menjadi *admin* di grup:
   - User yang melanggar akan otomatis di-*mute* selama **30 menit**.
-  - Permintaan token dari user tersebut akan dihentikan selama **12 jam**.
+  - Permintaan token dari user tersebut akan dihentikan selama **12 jam**. 
 - Jika bot *bukan admin*:
   - Bot tetap akan menghentikan respon permintaan token selama **12 jam**.
+
+*📢 Mohon Perhatian*
+
 
 ♻️ *UPDATE*
 ⏳ 2026-21-3 15:38WIB
