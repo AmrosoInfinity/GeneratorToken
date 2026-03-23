@@ -24,7 +24,7 @@ info= *📌 Cara Meminta Token*
   - Bot tetap akan menghentikan respon permintaan token selama **12 jam**.
 
 *📢 Mohon Perhatian*
-    Anonymously Admin grup tidak dapat dikenali identitas kepemilikan tombolnya saat AmrosolBot *bukan Admin* grup karena telegram menggunakan virtual user. Pastikan bot adalah Admin grup agar bisa membaca ID user Anonymously adalau sebagai Admin. 
+    Anonymously Admin grup tidak dapat dikenali identitas kepemilikan tombolnya saat AmrosolBot *bukan Admin* grup karena telegram menggunakan virtual user. Pastikan bot adalah Admin grup agar bisa membaca ID user Anonymously adalah sebagai Admin. 
 
 ♻️ *UPDATE*
 ⏳ 2026-21-3 15:38WIB
