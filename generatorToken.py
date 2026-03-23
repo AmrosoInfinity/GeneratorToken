@@ -7,7 +7,7 @@ from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load
 from support import string
 from utils.button_group_utils import send_group_only_message
 
-# mapping message_id -> {owner: user_id, is_anonymous: bool, expired: bool}
+# mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
 def set_expire_timer(context, chat_id, message_id):
@@ -38,7 +38,6 @@ def token_menu(update, context):
     # catat owner tombol baru
     active_button_owner[msg.message_id] = {
         "owner": update.effective_user.id,
-        "is_anonymous": bool(update.message.sender_chat),
         "expired": False
     }
     set_expire_timer(context, msg.chat_id, msg.message_id)
@@ -55,15 +54,14 @@ def button_handler(update, context):
     # cek kepemilikan tombol
     if state:
         if state["owner"] != user_id:
-            if state.get("is_anonymous"):
-                # tombol dibuat oleh anonymous admin → hanya izinkan anonymous dengan ID sama
-                admins = context.bot.get_chat_administrators(chat.id)
-                anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
-                if user_id != state["owner"] or user_id not in anon_ids:
-                    query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
-                    return
+            # ambil daftar admin untuk cek anonymous
+            admins = context.bot.get_chat_administrators(chat.id)
+            anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
+
+            # hanya izinkan anonymous admin menekan tombol jika dia adalah owner
+            if user_id in anon_ids and user_id == state["owner"]:
+                pass  # boleh lanjut
             else:
-                # tombol milik user biasa → tolak semua yang bukan owner
                 query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
                 return
 
@@ -80,7 +78,6 @@ def button_handler(update, context):
             msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
             active_button_owner[msg.message_id] = {
                 "owner": user_id,
-                "is_anonymous": False,
                 "expired": False
             }
             set_expire_timer(context, msg.chat_id, msg.message_id)
@@ -122,7 +119,6 @@ def button_handler(update, context):
         msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
         active_button_owner[msg.message_id] = {
             "owner": user_id,
-            "is_anonymous": False,
             "expired": False
         }
         set_expire_timer(context, msg.chat_id, msg.message_id)
