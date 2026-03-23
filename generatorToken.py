@@ -7,7 +7,7 @@ from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load
 from support import string
 from utils.button_group_utils import send_group_only_message
 
-# mapping message_id -> {owner: user_id, expired: bool}
+# mapping message_id -> {owner_user_id: int, owner_chat_id: int, expired: bool}
 active_button_owner = {}
 
 def set_expire_timer(context, chat_id, message_id):
@@ -36,16 +36,20 @@ def token_menu(update, context):
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
     # catat owner tombol baru
-    active_button_owner[msg.message_id] = {
-        "owner": update.effective_user.id,
-        "expired": False
-    }
+    owner_data = {"expired": False}
+    if update.effective_user:
+        owner_data["owner_user_id"] = update.effective_user.id
+    if update.message.sender_chat:
+        owner_data["owner_chat_id"] = update.message.sender_chat.id
+
+    active_button_owner[msg.message_id] = owner_data
     set_expire_timer(context, msg.chat_id, msg.message_id)
 
 def button_handler(update, context):
     query = update.callback_query
     chat = update.effective_chat
-    user_id = query.from_user.id
+    user_id = query.from_user.id if query.from_user else None
+    sender_chat_id = query.message.sender_chat.id if query.message.sender_chat else None
     data = query.data
     message_id = query.message.message_id
 
@@ -53,36 +57,37 @@ def button_handler(update, context):
 
     # cek kepemilikan tombol
     if state:
-        if state["owner"] != user_id:
-            # ambil daftar admin untuk cek anonymous
-            admins = context.bot.get_chat_administrators(chat.id)
-            anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
-            if user_id not in anon_ids:
-                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
-                return
+        valid_owner = False
+        if "owner_user_id" in state and user_id == state["owner_user_id"]:
+            valid_owner = True
+        if "owner_chat_id" in state and sender_chat_id == state["owner_chat_id"]:
+            valid_owner = True
+        if not valid_owner:
+            query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
+            return
 
-    user_requests, user_blocked, user_timezone = load_tmp(user_id)
+    user_requests, user_blocked, user_timezone = load_tmp(user_id or sender_chat_id)
 
     if data in ["grab", "gojek"]:
         if chat.type not in ["group", "supergroup"]:
             send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
             return
 
-        if str(user_id) not in user_timezone:
+        if str(user_id or sender_chat_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
-            # catat owner tombol baru
             active_button_owner[msg.message_id] = {
-                "owner": user_id,
+                "owner_user_id": user_id,
+                "owner_chat_id": sender_chat_id,
                 "expired": False
             }
             set_expire_timer(context, msg.chat_id, msg.message_id)
             return
 
-        tz_name = user_timezone.get(str(user_id))
+        tz_name = user_timezone.get(str(user_id or sender_chat_id))
         if data == "grab":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+            if check_limit(update, context, tz_name, user_id or sender_chat_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     chosen = random.choice(tokens)
@@ -90,10 +95,10 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            save_tmp(user_id or sender_chat_id, user_requests, user_blocked, user_timezone)
 
         elif data == "gojek":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+            if check_limit(update, context, tz_name, user_id or sender_chat_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
@@ -101,7 +106,7 @@ def button_handler(update, context):
                     query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            save_tmp(user_id or sender_chat_id, user_requests, user_blocked, user_timezone)
 
         if state:
             active_button_owner.pop(message_id, None)
@@ -114,17 +119,17 @@ def button_handler(update, context):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
-        # catat owner tombol baru
         active_button_owner[msg.message_id] = {
-            "owner": user_id,
+            "owner_user_id": user_id,
+            "owner_chat_id": sender_chat_id,
             "expired": False
         }
         set_expire_timer(context, msg.chat_id, msg.message_id)
 
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
-        user_timezone[str(user_id)] = tz_name
-        save_tmp(user_id, user_requests, user_blocked, user_timezone)
+        user_timezone[str(user_id or sender_chat_id)] = tz_name
+        save_tmp(user_id or sender_chat_id, user_requests, user_blocked, user_timezone)
         query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
         if state:
             active_button_owner.pop(message_id, None)
