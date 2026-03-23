@@ -51,16 +51,11 @@ def button_handler(update, context):
 
     state = active_button_owner.get(message_id)
 
-    # cek kepemilikan tombol
+    # cek kepemilikan tombol: hanya owner boleh menekan
     if state:
         if state["owner"] != user_id:
-            # ambil daftar admin untuk cek anonymous
-            admins = context.bot.get_chat_administrators(chat.id)
-            anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
-            # izinkan kalau user ini adalah admin anonim
-            if user_id not in anon_ids:
-                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
-                return
+            query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
+            return
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
