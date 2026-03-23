@@ -11,7 +11,7 @@ info= *📌 Cara Meminta Token*
 - Metode request saat ini menggunakan zona waktu untuk menyimpan data request agar dapat membatasi permintaan berlebihan.
 
 *🔘 Menambahkan Kepemilikan Tombol*
-- Tombol *Grab Gojek dan Set Lokasi* saat command */token* dipanggil adalah milik User. Terdapat batasan waktu 60 detik saat tombol on display. 
+- Tombol *Grab Gojek dan Set Timezone* saat command */token* dipanggil adalah milik User. Terdapat batasan waktu 60 detik saat tombol on display. 
 
 *⚠️ Batasan Permintaan*
 - Setiap user hanya bisa meminta token **maksimal 3 kali dalam 12 jam**.
