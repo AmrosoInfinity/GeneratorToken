@@ -57,8 +57,9 @@ def button_handler(update, context):
             # ambil daftar admin untuk cek anonymous
             admins = context.bot.get_chat_administrators(chat.id)
             anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
+            # izinkan kalau user ini adalah admin anonim
             if user_id not in anon_ids:
-                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
+                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
                 return
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
