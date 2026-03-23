@@ -19,7 +19,7 @@ def set_expire_timer(context, chat_id, message_id):
                 context.bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=message_id,
-                    text=string.NO_SELECTION_MSG,
+                    text=string.NO_SELECTION_MSG,   # "Anda tidak memilih apapun 🙄"
                     parse_mode="Markdown"
                 )
             except Exception:
@@ -57,12 +57,8 @@ def button_handler(update, context):
             # ambil daftar admin untuk cek anonymous
             admins = context.bot.get_chat_administrators(chat.id)
             anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
-
-            # hanya izinkan anonymous admin menekan tombol jika dia adalah owner
-            if user_id in anon_ids and user_id == state["owner"]:
-                pass  # boleh lanjut
-            else:
-                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
+            if user_id not in anon_ids:
+                query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)  # "Token ini bukan untukmu🥱"
                 return
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
@@ -76,6 +72,7 @@ def button_handler(update, context):
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
+            # catat owner tombol baru
             active_button_owner[msg.message_id] = {
                 "owner": user_id,
                 "expired": False
@@ -117,6 +114,7 @@ def button_handler(update, context):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
+        # catat owner tombol baru
         active_button_owner[msg.message_id] = {
             "owner": user_id,
             "expired": False
