@@ -15,15 +15,14 @@ def is_button_owner(context, chat, user_id, state, query):
     if state["owner"] == user_id:
         return True
 
-    # cek apakah user ini anonymous admin
+    # cek anonymous admin
     admins = context.bot.get_chat_administrators(chat.id)
     anon_ids = [admin.user.id for admin in admins if getattr(admin, "is_anonymous", False)]
 
-    # kalau anonymous admin tapi bukan owner → tolak
-    if user_id in anon_ids and user_id != state["owner"]:
-        query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
-        return False
+    # anonymous admin hanya boleh menekan tombol miliknya sendiri
+    if user_id in anon_ids and user_id == state["owner"]:
+        return True
 
-    # kalau bukan anonymous admin dan bukan owner → tolak
+    # bukan pemilik
     query.answer(string.NOT_YOUR_BUTTON_MSG, show_alert=True)
     return False
