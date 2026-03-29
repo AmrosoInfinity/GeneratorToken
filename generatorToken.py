@@ -20,20 +20,18 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    active_button_owner[msg.message_id] = {
-        "owner": update.effective_user.id,
-        "expired": False
-    }
+    active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
 
 def handle_grab(query, tz_name, user_id, user_requests, user_blocked, user_timezone, update, context):
     if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
         token = get_x_token(
+            file_path="playload/disini/grab_payload.bin",   # payload hasil capture di repo
+            prev_token="isi_token_lama_dari_response",     # token lama dari response sebelumnya
             batch_id="954a7e43-aaa1-4726-a280-c1b4451d0577",
             event_count=122,
-            batch_timestamp=1774808569291,
-            prev_token=""  # kosongkan jika tidak ada token lama
+            batch_timestamp=1774808569291
         )
         if token:
             query.edit_message_text(string.TOKEN_GRAB.format(token=token), parse_mode="Markdown")
