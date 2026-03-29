@@ -1,14 +1,10 @@
 import requests
-import os
 
-def get_x_token(prev_token: str, batch_id: str, event_count: int, batch_timestamp: int) -> str | None:
+def get_x_token(file_path: str, x_token: str, batch_id: str, event_count: int, batch_timestamp: int) -> str | None:
     """
-    Kirim payload binary dari repoRoot/playload/disini ke Grab /v2/track.
-    Ambil header x-token baru dari response.
+    Kirim payload binary dari file_path ke Grab /v2/track.
+    Sertakan header x-token lama, ambil x-token baru dari response.
     """
-    # Path relatif ke repo root
-    file_path = os.path.join(os.getcwd(), "playload", "disini", "grab_payload.bin")
-
     url = "https://mcd-gateway.grabtaxi.com/v2/track"
     headers = {
         "User-Agent": "Scribe/4.14.0/pax/Android",
@@ -16,7 +12,7 @@ def get_x_token(prev_token: str, batch_id: str, event_count: int, batch_timestam
         "Accept-Encoding": "gzip",
         "Content-Type": "application/octet-stream",
         "Content-Encoding": "gzip",
-        "x-token": prev_token,
+        "x-token": x_token,  # token lama dikirim
         "x-batchId": batch_id,
         "X-EVENT-COUNT": str(event_count),
         "x-batch-timestamp": str(batch_timestamp),
@@ -28,7 +24,7 @@ def get_x_token(prev_token: str, batch_id: str, event_count: int, batch_timestam
 
         resp = requests.post(url, headers=headers, data=data, timeout=10)
         resp.raise_for_status()
-        return resp.headers.get("x-token")
+        return resp.headers.get("x-token")  # token baru dari response
     except Exception as e:
         print(f"Error capture x-token: {e}")
         return None
