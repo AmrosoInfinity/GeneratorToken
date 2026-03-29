@@ -1,6 +1,7 @@
 import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
+
 from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
 from utils.button_group_utils import send_group_only_message
@@ -25,6 +26,33 @@ def token_menu(update, context):
     }
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
+
+def handle_grab(query, tz_name, user_id, user_requests, user_blocked, user_timezone, update, context):
+    if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+        token = get_x_token(
+            batch_id="954a7e43-aaa1-4726-a280-c1b4451d0577",
+            event_count=122,
+            batch_timestamp=1774808569291,
+            prev_token=""  # kosongkan jika tidak ada token lama
+        )
+        if token:
+            query.edit_message_text(string.TOKEN_GRAB.format(token=token), parse_mode="Markdown")
+        else:
+            query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
+    save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
+
+def handle_gojek(query, tz_name, user_id, user_requests, user_blocked, user_timezone, update, context):
+    if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+        tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
+        if tokens:
+            chosen = random.choice(tokens)
+            query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
+        else:
+            query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
+    save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
+
 def button_handler(update, context):
     query = update.callback_query
     chat = update.effective_chat
@@ -34,7 +62,6 @@ def button_handler(update, context):
 
     state = active_button_owner.get(message_id)
 
-    # gunakan utilitas untuk cek kepemilikan
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
@@ -49,32 +76,15 @@ def button_handler(update, context):
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
-            active_button_owner[msg.message_id] = {
-                "owner": user_id,
-                "expired": False
-            }
+            active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
             set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
             return
 
         tz_name = user_timezone.get(str(user_id))
         if data == "grab":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                token = get_x_token()
-                if token:
-                    query.edit_message_text(string.TOKEN_GRAB.format(token=token), parse_mode="Markdown")
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
-
+            handle_grab(query, tz_name, user_id, user_requests, user_blocked, user_timezone, update, context)
         elif data == "gojek":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
-                if tokens:
-                    chosen = random.choice(tokens)
-                    query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            handle_gojek(query, tz_name, user_id, user_requests, user_blocked, user_timezone, update, context)
 
         if state:
             active_button_owner.pop(message_id, None)
@@ -87,10 +97,7 @@ def button_handler(update, context):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
-        active_button_owner[msg.message_id] = {
-            "owner": user_id,
-            "expired": False
-        }
+        active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
         set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
     elif data.startswith("tz_"):
@@ -101,9 +108,11 @@ def button_handler(update, context):
         if state:
             active_button_owner.pop(message_id, None)
 
+
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
+
 
 def register_token_handlers(dp):
     register_token_menu(dp)
