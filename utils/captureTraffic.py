@@ -8,6 +8,7 @@ def get_x_token(headers=None):
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         resp.raise_for_status()
+        # Ambil header x-token dari response
         return resp.headers.get("x-token")
     except Exception as e:
         print(f"Error capture x-token: {e}")
