@@ -7,6 +7,7 @@ from support.string import (
     CHECKTOKEN_VALID_MSG,
     CHECKTOKEN_INVALID_MSG,
     CHECKTOKEN_ERROR_MSG,
+    CHECKTOKEN_NOT_A_TOKEN_MSG,
 )
 
 def checktoken_command(update, context):
@@ -20,17 +21,21 @@ def checktoken_handler(update, context):
         return
     context.user_data["awaiting_token"] = False
 
-    token = update.message.text.strip()
+    raw_text = update.message.text.strip()
+
+    # Hanya proses jika token dimulai dengan "ey"
+    if not raw_text.startswith("ey"):
+        update.message.reply_text(CHECKTOKEN_NOT_A_TOKEN_MSG)
+        return
+
+    token = raw_text
     token_length = len(token)
 
-    # Koordinat fix Gondangdia
     lat = "-6.1901"
     lng = "106.8326"
     url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
 
-    headers = {
-        "Authorization": token
-    }
+    headers = {"Authorization": token}
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
