@@ -10,7 +10,6 @@ from utils.chat_timer_utils import set_expire_timer
 
 logger = logging.getLogger(__name__)
 
-# mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
 def token_menu(update, context):
@@ -21,7 +20,6 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    # simpan owner tombol
     active_button_owner[msg.message_id] = {
         "owner": update.effective_user.id,
         "expired": False
@@ -38,7 +36,6 @@ def button_handler(update, context):
 
     state = active_button_owner.get(message_id)
 
-    # cek kepemilikan tombol
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
@@ -54,10 +51,7 @@ def button_handler(update, context):
                 keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
-                active_button_owner[msg.message_id] = {
-                    "owner": user_id,
-                    "expired": False
-                }
+                active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
                 set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
                 return
 
@@ -66,10 +60,8 @@ def button_handler(update, context):
             if data == "grab":
                 if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                     tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
-                    logger.debug(f"Fetched Grab tokens: {tokens}")
                     if tokens:
                         chosen = random.choice(tokens)
-                        logger.debug(f"Chosen Grab token: {chosen}")
                         text = "Token Grab berhasil dibuat.\n\n`••••••••••`"
                         keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_grab:{chosen}")]]
                         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -81,10 +73,8 @@ def button_handler(update, context):
             elif data == "gojek":
                 if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                     tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
-                    logger.debug(f"Fetched Gojek tokens: {tokens}")
                     if tokens:
                         chosen = random.choice(tokens)
-                        logger.debug(f"Chosen Gojek token: {chosen}")
                         text = "Token Gojek berhasil dibuat.\n\n`••••••••••`"
                         keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_gojek:{chosen}")]]
                         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -116,10 +106,7 @@ def button_handler(update, context):
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
-            active_button_owner[msg.message_id] = {
-                "owner": user_id,
-                "expired": False
-            }
+            active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
             set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
         elif data.startswith("tz_"):
@@ -138,10 +125,7 @@ def button_handler(update, context):
 def error_handler(update, context: CallbackContext):
     logger.error(msg="Exception while handling update:", exc_info=context.error)
     if update and update.effective_chat:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="⚠️ Terjadi error internal pada bot."
-        )
+        context.bot.send_message(chat_id=update.effective_chat.id, text="⚠️ Terjadi error internal pada bot.")
 
 
 def register_token_menu(dp):
