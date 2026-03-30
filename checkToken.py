@@ -1,22 +1,9 @@
-import requests
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, MessageHandler, Filters
-from utils.remove_token_user import remove_user_token_message
-
-def checktoken_command(update, context):
-    keyboard = [[InlineKeyboardButton("Masukkan Token", switch_inline_query_current_chat="")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(
-        "Silakan paste token Anda di chat atau kirim file .txt berisi token.\n"
-        "Pesan token akan otomatis dihapus setelah dicek.",
-        reply_markup=reply_markup
-    )
-
 def checktoken_handler(update, context):
-    token = update.message.text.strip()
+    raw_text = update.message.text
+    # Hilangkan mention bot dan simbol bintang
+    token = raw_text.replace("@AmrosolBot", "").replace("*", "").strip()
     token_length = len(token)
 
-    # Koordinat fix Gondangdia
     lat = "-6.1901"
     lng = "106.8326"
     url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
@@ -53,9 +40,4 @@ def checktoken_handler(update, context):
     except Exception as e:
         update.message.reply_text(f"⚠️ Error saat cek token: {e}")
 
-    # hapus pesan token user
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
-
-def register_checktoken(dp):
-    dp.add_handler(CommandHandler("checktoken", checktoken_command))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, checktoken_handler))
