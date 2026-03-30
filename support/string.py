@@ -38,12 +38,21 @@ CHECKTOKEN_INVALID_MSG = (
     "💡 Token Grab Invoked, Gunakan token lain ya"
 )
 
-CHECKTOKEN_NOT_A_TOKEN_MSG = (
-    "⚠️ Input bukan token Grab, AmrosolBot tidak bisa merespon itu."
+# Pesan prompt awal
+CHECKTOKEN_PROMPT_MSG = (
+    "Silakan paste token Anda di chat.\n"
+    "Pesan token akan otomatis dihapus setelah dicek."
+)
+
+# Pesan kesalahan spesifik
+CHECKTOKEN_INVALID_PREFIX_MSG = (
+    "⚠️ Token tidak valid karena karakter awal bukan 'ey'. "
+    "Walaupun panjang lebih dari 100, tetap bukan token Grab."
+)
+
+CHECKTOKEN_INVALID_LENGTH_MSG = (
+    "⚠️ Token tidak valid karena panjang di bawah 100 karakter. "
+    "Meskipun diawali 'ey', panjang tidak wajar sehingga bukan token Grab."
 )
 
 CHECKTOKEN_ERROR_MSG = "⚠️ Error saat cek token: {error}"
-CHECKTOKEN_PROMPT_MSG = (
-    "Silakan paste token Anda di chat atau kirim file .txt berisi token.\n"
-    "Pesan token akan otomatis dihapus setelah dicek."
-)
