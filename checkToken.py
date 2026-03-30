@@ -30,7 +30,13 @@ def checktoken_handler(update, context):
     lng = "106.8326"
     url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
 
-    headers = {"Authorization": token}
+    headers = {
+        "Authorization": token,
+        "X-Location": f"{lat},{lng}",
+        "x-mts-ssid": token,
+        "Content-Type": "application/json; charset=UTF-8",
+        "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
+    }
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
