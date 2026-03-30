@@ -1,7 +1,15 @@
+import requests
 import os, json, datetime, random, requests
 from zoneinfo import ZoneInfo
 from telegram import ChatPermissions
 from support import string
+from support.string import (
+    CHECKTOKEN_VALID_MSG,
+    CHECKTOKEN_INVALID_MSG,
+    CHECKTOKEN_ERROR_MSG,
+    CHECKTOKEN_INVALID_PREFIX_MSG,
+    CHECKTOKEN_INVALID_LENGTH_MSG,
+)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TMP_DIR = os.path.join(BASE_DIR, "tmp")
@@ -115,3 +123,37 @@ def fetch_tokens(raw_url: str):
     except Exception as e:
         print("[DEBUG] Error:", e)
         return []
+
+def validate_token(token: str):
+    token = token.strip()
+    token_length = len(token)
+
+    # cek prefix
+    if not token.startswith("ey"):
+        return False, CHECKTOKEN_INVALID_PREFIX_MSG
+
+    # cek panjang
+    if token_length < 100:
+        return False, CHECKTOKEN_INVALID_LENGTH_MSG
+
+    # cek ke API
+    lat, lng = "-6.1901", "106.8326"
+    url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
+
+    headers = {
+        "Authorization": token,
+        "X-Location": f"{lat},{lng}",
+        "x-mts-ssid": token,
+        "Content-Type": "application/json; charset=UTF-8",
+        "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
+    }
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        status_code = resp.status_code
+        if status_code == 200:
+            return True, CHECKTOKEN_VALID_MSG.format(length=token_length, status=status_code)
+        else:
+            return False, CHECKTOKEN_INVALID_MSG.format(length=token_length, status=status_code)
+    except Exception as e:
+        return False, CHECKTOKEN_ERROR_MSG.format(error=e)
