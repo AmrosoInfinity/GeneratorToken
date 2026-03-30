@@ -38,6 +38,10 @@ CHECKTOKEN_INVALID_MSG = (
     "💡 Token Grab Invoked, Gunakan tokeb lain ya"
 )
 
+CHECKTOKEN_NOT_A_TOKEN_MSG = (
+    "⚠️ Input bukan token Grab, AmrosolBot tidak bisa merespon itu."
+)
+
 CHECKTOKEN_ERROR_MSG = "⚠️ Error saat cek token: {error}"
 CHECKTOKEN_PROMPT_MSG = (
     "Silakan paste token Anda di chat atau kirim file .txt berisi token.\n"
