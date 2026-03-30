@@ -11,6 +11,7 @@ from utils.chat_timer_utils import set_expire_timer
 logger = logging.getLogger(__name__)
 
 active_button_owner = {}
+token_cache = {}  # simpan token per message_id
 
 def token_menu(update, context):
     keyboard = [
@@ -62,8 +63,9 @@ def button_handler(update, context):
                     tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                     if tokens:
                         chosen = random.choice(tokens)
+                        token_cache[message_id] = chosen
                         text = "Token Grab berhasil dibuat.\n\n`••••••••••`"
-                        keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_grab:{chosen}")]]
+                        keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data="copy_grab")]]
                         reply_markup = InlineKeyboardMarkup(keyboard)
                         query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
                     else:
@@ -75,8 +77,9 @@ def button_handler(update, context):
                     tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                     if tokens:
                         chosen = random.choice(tokens)
+                        token_cache[message_id] = chosen
                         text = "Token Gojek berhasil dibuat.\n\n`••••••••••`"
-                        keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_gojek:{chosen}")]]
+                        keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data="copy_gojek")]]
                         reply_markup = InlineKeyboardMarkup(keyboard)
                         query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
                     else:
@@ -86,14 +89,14 @@ def button_handler(update, context):
             if state:
                 active_button_owner.pop(message_id, None)
 
-        elif data.startswith("copy_grab:"):
-            token = data.split("copy_grab:")[1]
+        elif data == "copy_grab":
+            token = token_cache.get(message_id, "")
             query.edit_message_text(string.TOKEN_FREE_GRAB_MSG.format(token=token), parse_mode="Markdown")
             if state:
                 active_button_owner.pop(message_id, None)
 
-        elif data.startswith("copy_gojek:"):
-            token = data.split("copy_gojek:")[1]
+        elif data == "copy_gojek":
+            token = token_cache.get(message_id, "")
             query.edit_message_text(string.TOKEN_FREE_GOJEK_MSG.format(token=token), parse_mode="Markdown")
             if state:
                 active_button_owner.pop(message_id, None)
