@@ -5,6 +5,7 @@ from generatorToken import register_token_handlers
 from chatOpenAi import register_chat_handlers
 from appopsPermission import register_appops_handlers
 from commandBot import register_command_handlers
+from checkToken import register_checktoken
 
 def main():
     # Setup logging (akan tampil di console GitHub Actions)
@@ -30,6 +31,7 @@ def main():
     register_chat_handlers(dp)        # modul chatOpenAi
     register_appops_handlers(dp)      # modul appopsPermission
     register_command_handlers(dp)     # modul commandBot
+    register_checktoken(dp)
     logger.debug("Handlers registered.")
 
     # Jalankan bot
