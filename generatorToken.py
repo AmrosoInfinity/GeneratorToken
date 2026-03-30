@@ -65,7 +65,7 @@ def button_handler(update, context):
                 if tokens:
                     chosen = random.choice(tokens)
                     text = "Token Grab berhasil dibuat.\n\n`••••••••••`"
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token", switch_inline_query=chosen)]]
+                    keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_grab:{chosen}")]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
                     query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
                 else:
@@ -78,13 +78,25 @@ def button_handler(update, context):
                 if tokens:
                     chosen = random.choice(tokens)
                     text = "Token Gojek berhasil dibuat.\n\n`••••••••••`"
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token", switch_inline_query=chosen)]]
+                    keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_gojek:{chosen}")]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
                     query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
+        if state:
+            active_button_owner.pop(message_id, None)
+
+    elif data.startswith("copy_grab:"):
+        token = data.split("copy_grab:")[1]
+        query.edit_message_text(string.TOKEN_FREE_GRAB_MSG.format(token=token), parse_mode="Markdown")
+        if state:
+            active_button_owner.pop(message_id, None)
+
+    elif data.startswith("copy_gojek:"):
+        token = data.split("copy_gojek:")[1]
+        query.edit_message_text(string.TOKEN_FREE_GOJEK_MSG.format(token=token), parse_mode="Markdown")
         if state:
             active_button_owner.pop(message_id, None)
 
