@@ -3,33 +3,28 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters
 from utils.remove_token_user import remove_user_token_message
 from support.string import (
-    CHECKTOKEN_PROMPT_MSG,
     CHECKTOKEN_VALID_MSG,
     CHECKTOKEN_INVALID_MSG,
     CHECKTOKEN_ERROR_MSG,
+    CHECKTOKEN_PROMPT_MSG,
     CHECKTOKEN_NOT_A_TOKEN_MSG,
 )
 
 def checktoken_command(update, context):
-    context.user_data["awaiting_token"] = True
     keyboard = [[InlineKeyboardButton("Masukkan Token", switch_inline_query_current_chat="")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(CHECKTOKEN_PROMPT_MSG, reply_markup=reply_markup)
 
 def checktoken_handler(update, context):
-    if not context.user_data.get("awaiting_token"):
-        return
-    context.user_data["awaiting_token"] = False
+    raw_text = update.message.text
+    # Bersihkan mention, simbol, dan spasi
+    token = raw_text.replace("@AmrosolBot", "").replace("*", "").strip()
+    token_length = len(token)
 
-    raw_text = update.message.text.strip()
-
-    # Hanya proses jika token dimulai dengan "ey"
-    if not raw_text.startswith("ey"):
+    # Validasi awal: hanya token yang dimulai "ey"
+    if not token.startswith("ey"):
         update.message.reply_text(CHECKTOKEN_NOT_A_TOKEN_MSG)
         return
-
-    token = raw_text
-    token_length = len(token)
 
     lat = "-6.1901"
     lng = "106.8326"
@@ -55,4 +50,5 @@ def checktoken_handler(update, context):
 
 def register_checktoken(dp):
     dp.add_handler(CommandHandler("checktoken", checktoken_command))
+    # Full filter: hanya teks biasa, bukan command
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, checktoken_handler))
