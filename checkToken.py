@@ -21,23 +21,36 @@ def checktoken_handler(update, context):
     Handler untuk pesan token user.
     Bot akan cek ke Grab API lalu hapus pesan token.
     """
-    token = update.message.text.strip()
-    url = "https://api.grab.com/grabid/v1/me/status"
+    token = update.message.text
+    token_length = len(token)
 
-    # Samakan header dengan curl agar hasil identik
+    url = "https://api.grab.com/grabid/v1/me/status"
     headers = {
-        "Authorization": token,          # tanpa Bearer karena pakai njwt
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate",
-        "User-Agent": "curl/7.68.0"      # sesuaikan dengan versi curl di Termux
+        "Authorization": token  # sama persis dengan curl di Termux
     }
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code == 200:
-            update.message.reply_text("✅ Token valid.\nResponse:\n" + resp.text)
+        status_code = resp.status_code
+        response_text = resp.text
+
+        if status_code == 200:
+            reply = (
+                "✅ Token valid.\n"
+                f"🔢 Panjang token: {token_length} karakter\n"
+                f"📡 Status code: {status_code}\n"
+                f"📄 Cuplikan response:\n{response_text[:300]}..."
+            )
         else:
-            update.message.reply_text(f"❌ Token tidak valid. Status code: {resp.status_code}")
+            reply = (
+                "❌ Token tidak valid.\n"
+                f"🔢 Panjang token: {token_length} karakter\n"
+                f"📡 Status code: {status_code}\n"
+                f"📄 Response:\n{response_text[:200]}..."
+            )
+
+        update.message.reply_text(reply)
+
     except Exception as e:
         update.message.reply_text(f"⚠️ Error saat cek token: {e}")
 
