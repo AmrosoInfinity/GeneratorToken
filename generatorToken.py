@@ -1,11 +1,14 @@
 import random
+import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackQueryHandler
+from telegram.ext import CommandHandler, CallbackQueryHandler, CallbackContext
 from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
 from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
+
+logger = logging.getLogger(__name__)
 
 # mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
@@ -41,91 +44,110 @@ def button_handler(update, context):
 
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
-    if data in ["grab", "gojek"]:
-        if chat.type not in ["group", "supergroup"]:
-            send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
-            return
+    try:
+        if data in ["grab", "gojek"]:
+            if chat.type not in ["group", "supergroup"]:
+                send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
+                return
 
-        if str(user_id) not in user_timezone:
-            keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
+            if str(user_id) not in user_timezone:
+                keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
+                active_button_owner[msg.message_id] = {
+                    "owner": user_id,
+                    "expired": False
+                }
+                set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
+                return
+
+            tz_name = user_timezone.get(str(user_id))
+
+            if data == "grab":
+                if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+                    tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
+                    logger.debug(f"Fetched Grab tokens: {tokens}")
+                    if tokens:
+                        chosen = random.choice(tokens)
+                        logger.debug(f"Chosen Grab token: {chosen}")
+                        text = "Token Grab berhasil dibuat.\n\n`••••••••••`"
+                        keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_grab:{chosen}")]]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+                    else:
+                        query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
+                save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
+            elif data == "gojek":
+                if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+                    tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
+                    logger.debug(f"Fetched Gojek tokens: {tokens}")
+                    if tokens:
+                        chosen = random.choice(tokens)
+                        logger.debug(f"Chosen Gojek token: {chosen}")
+                        text = "Token Gojek berhasil dibuat.\n\n`••••••••••`"
+                        keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_gojek:{chosen}")]]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+                    else:
+                        query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
+                save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
+            if state:
+                active_button_owner.pop(message_id, None)
+
+        elif data.startswith("copy_grab:"):
+            token = data.split("copy_grab:")[1]
+            query.edit_message_text(string.TOKEN_FREE_GRAB_MSG.format(token=token), parse_mode="Markdown")
+            if state:
+                active_button_owner.pop(message_id, None)
+
+        elif data.startswith("copy_gojek:"):
+            token = data.split("copy_gojek:")[1]
+            query.edit_message_text(string.TOKEN_FREE_GOJEK_MSG.format(token=token), parse_mode="Markdown")
+            if state:
+                active_button_owner.pop(message_id, None)
+
+        elif data == "set_timezone":
+            keyboard = [
+                [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
+                [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
+                [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
+            ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=reply_markup)
+            msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
             active_button_owner[msg.message_id] = {
                 "owner": user_id,
                 "expired": False
             }
             set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
-            return
 
-        tz_name = user_timezone.get(str(user_id))
-
-        if data == "grab":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
-                if tokens:
-                    chosen = random.choice(tokens)
-                    text = "Token Grab berhasil dibuat.\n\n`••••••••••`"
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_grab:{chosen}")]]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
+        elif data.startswith("tz_"):
+            tz_name = data.replace("tz_", "")
+            user_timezone[str(user_id)] = tz_name
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
+            if state:
+                active_button_owner.pop(message_id, None)
 
-        elif data == "gojek":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
-                if tokens:
-                    chosen = random.choice(tokens)
-                    text = "Token Gojek berhasil dibuat.\n\n`••••••••••`"
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token", callback_data=f"copy_gojek:{chosen}")]]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+    except Exception as e:
+        logger.error("Error in button_handler", exc_info=e)
+        query.edit_message_text("⚠️ Terjadi error saat memproses permintaan.", parse_mode="Markdown")
 
-        if state:
-            active_button_owner.pop(message_id, None)
 
-    elif data.startswith("copy_grab:"):
-        token = data.split("copy_grab:")[1]
-        query.edit_message_text(string.TOKEN_FREE_GRAB_MSG.format(token=token), parse_mode="Markdown")
-        if state:
-            active_button_owner.pop(message_id, None)
-
-    elif data.startswith("copy_gojek:"):
-        token = data.split("copy_gojek:")[1]
-        query.edit_message_text(string.TOKEN_FREE_GOJEK_MSG.format(token=token), parse_mode="Markdown")
-        if state:
-            active_button_owner.pop(message_id, None)
-
-    elif data == "set_timezone":
-        keyboard = [
-            [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
-            [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
-            [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
-        active_button_owner[msg.message_id] = {
-            "owner": user_id,
-            "expired": False
-        }
-        set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
-
-    elif data.startswith("tz_"):
-        tz_name = data.replace("tz_", "")
-        user_timezone[str(user_id)] = tz_name
-        save_tmp(user_id, user_requests, user_blocked, user_timezone)
-        query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
-        if state:
-            active_button_owner.pop(message_id, None)
+def error_handler(update, context: CallbackContext):
+    logger.error(msg="Exception while handling update:", exc_info=context.error)
+    if update and update.effective_chat:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="⚠️ Terjadi error internal pada bot."
+        )
 
 
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
+    dp.add_error_handler(error_handler)
 
 
 def register_token_handlers(dp):
