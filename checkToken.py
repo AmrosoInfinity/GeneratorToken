@@ -3,32 +3,33 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters
 from utils.remove_token_user import remove_user_token_message
 from support.string import (
+    CHECKTOKEN_PROMPT_MSG,
     CHECKTOKEN_VALID_MSG,
     CHECKTOKEN_INVALID_MSG,
     CHECKTOKEN_ERROR_MSG,
-    CHECKTOKEN_PROMPT_MSG,
 )
 
 def checktoken_command(update, context):
+    context.user_data["awaiting_token"] = True
     keyboard = [[InlineKeyboardButton("Masukkan Token", switch_inline_query_current_chat="")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(CHECKTOKEN_PROMPT_MSG, reply_markup=reply_markup)
 
 def checktoken_handler(update, context):
-    raw_text = update.message.text
-    token = raw_text.replace("@AmrosolBot", "").replace("*", "").strip()
+    if not context.user_data.get("awaiting_token"):
+        return
+    context.user_data["awaiting_token"] = False
+
+    token = update.message.text.strip()
     token_length = len(token)
 
+    # Koordinat fix Gondangdia
     lat = "-6.1901"
     lng = "106.8326"
     url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
 
     headers = {
-        "Authorization": token,
-        "X-Location": f"{lat},{lng}",
-        "x-mts-ssid": token,
-        "Content-Type": "application/json; charset=UTF-8",
-        "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
+        "Authorization": token
     }
 
     try:
