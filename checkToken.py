@@ -1,3 +1,5 @@
+# checkToken.py
+
 import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryHandler
@@ -12,18 +14,10 @@ from support.string import (
 )
 
 def checktoken_command(update, context):
-    # simpan owner id + message_id prompt
-    sent = update.message.reply_text(
-        CHECKTOKEN_PROMPT_MSG,
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
-        )
-    )
-    context.user_data["checktoken_state"] = {
-        "owner": update.effective_user.id,
-        "expired": False,
-        "prompt_id": sent.message_id,
-    }
+    context.user_data["checktoken_state"] = {"owner": update.effective_user.id}
+    keyboard = [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(CHECKTOKEN_PROMPT_MSG, reply_markup=reply_markup)
 
 def checktoken_button(update, context):
     query = update.callback_query
@@ -35,10 +29,7 @@ def checktoken_button(update, context):
         return
 
     query.answer()
-    # ubah pesan prompt jadi instruksi biasa
     query.edit_message_text("Silakan kirim token Anda di chat.")
-
-    # hapus state agar tidak bisa dipakai lagi
     context.user_data.pop("checktoken_state", None)
 
 def checktoken_handler(update, context):
@@ -50,8 +41,7 @@ def checktoken_handler(update, context):
         update.message.reply_text(CHECKTOKEN_NOT_A_TOKEN_MSG)
         return
 
-    lat = "-6.1901"
-    lng = "106.8326"
+    lat, lng = "-6.1901", "106.8326"
     url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
 
     headers = {
@@ -65,24 +55,17 @@ def checktoken_handler(update, context):
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         status_code = resp.status_code
-
         if status_code == 200:
             reply = CHECKTOKEN_VALID_MSG.format(length=token_length, status=status_code)
         else:
             reply = CHECKTOKEN_INVALID_MSG.format(length=token_length, status=status_code)
-
         update.message.reply_text(reply)
-
     except Exception as e:
         update.message.reply_text(CHECKTOKEN_ERROR_MSG.format(error=e))
 
-    # hapus pesan token user
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
 
-    # hapus pesan prompt bot (jika masih ada)
-    state = context.user_data.get("checktoken_state")
-    if state and "prompt_id" in state:
-        try:
-            context.bot.delete_message(update.message.chat_id, state["prompt_id"])
-        except Exception:
-            pass
+def register_checktoken(dp):
+    dp.add_handler(CommandHandler("checktoken", checktoken_command))
+    dp.add_handler(CallbackQueryHandler(checktoken_button, pattern="^checktoken$"))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, checktoken_handler))
