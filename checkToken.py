@@ -1,15 +1,9 @@
-import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from utils.remove_token_user import remove_user_token_message
 from utils.button_ownership_utils import is_button_owner
-from support.string import (
-    CHECKTOKEN_VALID_MSG,
-    CHECKTOKEN_INVALID_MSG,
-    CHECKTOKEN_ERROR_MSG,
-    CHECKTOKEN_PROMPT_MSG,
-    CHECKTOKEN_NOT_A_TOKEN_MSG,
-)
+from utils.token_validator import validate_token
+from support.string import CHECKTOKEN_PROMPT_MSG
 
 # Command /checktoken → kirim prompt + tombol inline
 def checktoken_command(update, context):
@@ -19,7 +13,6 @@ def checktoken_command(update, context):
             [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
         )
     )
-    # simpan owner + message_id prompt
     context.user_data["checktoken_state"] = {
         "owner": update.effective_user.id,
         "prompt_id": sent.message_id,
@@ -36,42 +29,16 @@ def checktoken_button(update, context):
         return
 
     query.answer()
-    # ubah pesan prompt jadi instruksi biasa (tombol hilang)
     query.edit_message_text("Silakan kirim token Anda di chat.")
-    # hapus state agar tidak bisa dipakai lagi
     context.user_data.pop("checktoken_state", None)
 
 # Handler token user
 def checktoken_handler(update, context):
     raw_text = update.message.text
     token = raw_text.replace("@AmrosolBot", "").replace("*", "").strip()
-    token_length = len(token)
 
-    if not token.startswith("ey"):
-        update.message.reply_text(CHECKTOKEN_NOT_A_TOKEN_MSG)
-        return
-
-    lat, lng = "-6.1901", "106.8326"
-    url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
-
-    headers = {
-        "Authorization": token,
-        "X-Location": f"{lat},{lng}",
-        "x-mts-ssid": token,
-        "Content-Type": "application/json; charset=UTF-8",
-        "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
-    }
-
-    try:
-        resp = requests.get(url, headers=headers, timeout=10)
-        status_code = resp.status_code
-        if status_code == 200:
-            reply = CHECKTOKEN_VALID_MSG.format(length=token_length, status=status_code)
-        else:
-            reply = CHECKTOKEN_INVALID_MSG.format(length=token_length, status=status_code)
-        update.message.reply_text(reply)
-    except Exception as e:
-        update.message.reply_text(CHECKTOKEN_ERROR_MSG.format(error=e))
+    is_valid, message = validate_token(token)
+    update.message.reply_text(message)
 
     # hapus pesan token user
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
