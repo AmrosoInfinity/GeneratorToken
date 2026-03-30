@@ -1,7 +1,8 @@
 import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, MessageHandler, Filters
+from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from utils.remove_token_user import remove_user_token_message
+from utils.button_ownership_utils import is_checktoken_owner
 from support.string import (
     CHECKTOKEN_VALID_MSG,
     CHECKTOKEN_INVALID_MSG,
@@ -11,17 +12,33 @@ from support.string import (
 )
 
 def checktoken_command(update, context):
-    keyboard = [[InlineKeyboardButton("Masukkan Token", switch_inline_query_current_chat="")]]
+    # simpan owner id
+    context.user_data["checktoken_state"] = {"owner": update.effective_user.id, "expired": False}
+    keyboard = [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(CHECKTOKEN_PROMPT_MSG, reply_markup=reply_markup)
 
+def checktoken_button(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+    chat = update.effective_chat
+    state = context.user_data.get("checktoken_state")
+
+    # cek ownership
+    if not is_checktoken_owner(context, chat, user_id, state, query):
+        return
+
+    # kalau owner → hapus tombol setelah ditekan
+    query.answer()
+    query.edit_message_text("Silakan kirim token Anda di chat.")
+    # hapus state agar tidak bisa dipakai lagi
+    context.user_data.pop("checktoken_state", None)
+
 def checktoken_handler(update, context):
     raw_text = update.message.text
-    # Bersihkan mention, simbol, dan spasi
     token = raw_text.replace("@AmrosolBot", "").replace("*", "").strip()
     token_length = len(token)
 
-    # Validasi awal: hanya token yang dimulai "ey"
     if not token.startswith("ey"):
         update.message.reply_text(CHECKTOKEN_NOT_A_TOKEN_MSG)
         return
@@ -56,5 +73,5 @@ def checktoken_handler(update, context):
 
 def register_checktoken(dp):
     dp.add_handler(CommandHandler("checktoken", checktoken_command))
-    # Full filter: hanya teks biasa, bukan command
+    dp.add_handler(CallbackQueryHandler(checktoken_button, pattern="^checktoken$"))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, checktoken_handler))
