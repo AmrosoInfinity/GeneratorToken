@@ -24,11 +24,11 @@ def checktoken_button(update, context):
     chat = update.effective_chat
     state = context.user_data.get("checktoken_state")
 
-    # cek ownership dengan util
+    # cek ownership
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
-    # kalau owner → hapus tombol setelah ditekan
+    # owner menekan tombol → hapus tombol
     query.answer()
     query.edit_message_text("Silakan kirim token Anda di chat.")
     context.user_data.pop("checktoken_state", None)
