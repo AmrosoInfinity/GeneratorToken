@@ -23,3 +23,23 @@ LIMIT_BLOCKED = "⚠️ User {mention} (ID: {id}) sedang diblokir hingga {until}
 LIMIT_EXCEEDED = "⚠️ User {mention} (ID: {id}) melebihi batas 3 request per hari dan telah di-mute selama 30 menit."
 LIMIT_MUTE_FAILED = "⚠️ Tidak bisa mute {mention} (id={id}), kemungkinan owner/admin utama."
 LIMIT_INFO = "🕒 Waktu request: {now}\n✅ Request ke-{count} hari ini.\n🎯 Sisa kesempatan: {remaining}"
+
+CHECKTOKEN_VALID_MSG = (
+    "✅ Token valid.\n"
+    "🔢 Panjang token: {length} karakter\n"
+    "📡 Status code: {status}\n"
+    "📍 Lokasi dicek: Stasiun Gondangdia"
+)
+
+CHECKTOKEN_INVALID_MSG = (
+    "❌ Token tidak valid.\n"
+    "🔢 Panjang token: {length} karakter\n"
+    "📡 Status code: {status}\n"
+    "📍 Lokasi dicek: Stasiun Gondangdia"
+)
+
+CHECKTOKEN_ERROR_MSG = "⚠️ Error saat cek token: {error}"
+CHECKTOKEN_PROMPT_MSG = (
+    "Silakan paste token Anda di chat atau kirim file .txt berisi token.\n"
+    "Pesan token akan otomatis dihapus setelah dicek."
+)
