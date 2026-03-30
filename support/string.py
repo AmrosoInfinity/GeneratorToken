@@ -28,14 +28,14 @@ CHECKTOKEN_VALID_MSG = (
     "✅ Token valid.\n"
     "🔢 Panjang token: {length} karakter\n"
     "📡 Status code: {status}\n"
-    "📍 Lokasi dicek: Stasiun Gondangdia"
+    "📜 Selamat Token Grab bisa digunakan, \n Semangat bekerja pejuang rupiah, tetap ingat keluarga dirumah"
 )
 
 CHECKTOKEN_INVALID_MSG = (
     "❌ Token tidak valid.\n"
     "🔢 Panjang token: {length} karakter\n"
     "📡 Status code: {status}\n"
-    "📍 Lokasi dicek: Stasiun Gondangdia"
+    "💡 Token Grab Invoked, Gunakan tokeb lain ya"
 )
 
 CHECKTOKEN_ERROR_MSG = "⚠️ Error saat cek token: {error}"
