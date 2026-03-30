@@ -35,7 +35,7 @@ CHECKTOKEN_INVALID_MSG = (
     "❌ Token tidak valid.\n"
     "🔢 Panjang token: {length} karakter\n"
     "📡 Status code: {status}\n"
-    "💡 Token Grab Invoked, Gunakan tokeb lain ya"
+    "💡 Token Grab Invoked, Gunakan token lain ya"
 )
 
 CHECKTOKEN_NOT_A_TOKEN_MSG = (
