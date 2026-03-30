@@ -12,11 +12,18 @@ from support.string import (
 )
 
 def checktoken_command(update, context):
-    # simpan owner id di state
-    context.user_data["checktoken_state"] = {"owner": update.effective_user.id, "expired": False}
-    keyboard = [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(CHECKTOKEN_PROMPT_MSG, reply_markup=reply_markup)
+    # simpan owner id + message_id prompt
+    sent = update.message.reply_text(
+        CHECKTOKEN_PROMPT_MSG,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
+        )
+    )
+    context.user_data["checktoken_state"] = {
+        "owner": update.effective_user.id,
+        "expired": False,
+        "prompt_id": sent.message_id,
+    }
 
 def checktoken_button(update, context):
     query = update.callback_query
@@ -24,13 +31,14 @@ def checktoken_button(update, context):
     chat = update.effective_chat
     state = context.user_data.get("checktoken_state")
 
-    # cek ownership
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
-    # owner menekan tombol → hapus tombol
     query.answer()
+    # ubah pesan prompt jadi instruksi biasa
     query.edit_message_text("Silakan kirim token Anda di chat.")
+
+    # hapus state agar tidak bisa dipakai lagi
     context.user_data.pop("checktoken_state", None)
 
 def checktoken_handler(update, context):
@@ -68,9 +76,13 @@ def checktoken_handler(update, context):
     except Exception as e:
         update.message.reply_text(CHECKTOKEN_ERROR_MSG.format(error=e))
 
+    # hapus pesan token user
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
 
-def register_checktoken(dp):
-    dp.add_handler(CommandHandler("checktoken", checktoken_command))
-    dp.add_handler(CallbackQueryHandler(checktoken_button, pattern="^checktoken$"))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, checktoken_handler))
+    # hapus pesan prompt bot (jika masih ada)
+    state = context.user_data.get("checktoken_state")
+    if state and "prompt_id" in state:
+        try:
+            context.bot.delete_message(update.message.chat_id, state["prompt_id"])
+        except Exception:
+            pass
