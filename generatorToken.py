@@ -59,7 +59,7 @@ def button_handler(update, context):
                 if tokens:
                     chosen = random.choice(tokens)
                     # tampilkan popup berisi token
-                    query.answer(f"Token Grab Anda:\n\n{chosen}\n\n📋 Tekan tombol Salin di bawah", show_alert=True)
+                    query.answer(f"Token Grab Anda:\n\n{chosen}", show_alert=True)
                     # kirim tombol salin di chat (tanpa token)
                     keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query=chosen)]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -73,7 +73,7 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
-                    query.answer(f"Token Gojek Anda:\n\n{chosen}\n\n📋 Tekan tombol Salin di bawah", show_alert=True)
+                    query.answer(f"Token Gojek Anda:\n\n{chosen}", show_alert=True)
                     keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query=chosen)]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
                     query.edit_message_text("Token Gojek berhasil dibuat.", reply_markup=reply_markup)
