@@ -7,6 +7,7 @@ from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
 
+# mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
 def token_menu(update, context):
@@ -53,30 +54,34 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
 
+        # Grab
         if data == "grab":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     chosen = random.choice(tokens)
-                    # tampilkan popup berisi token
-                    query.answer(f"Token Grab Anda:\n\n{chosen}", show_alert=True)
-                    # kirim tombol salin di chat (tanpa token)
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query=chosen)]]
+                    # tampilkan token tersamar di chat
+                    masked = chosen[:6] + "••••••••"
+                    text = f"Token Grab berhasil dibuat.\n\n`{masked}`"
+                    # tombol salin token asli penuh
+                    keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query_current_chat=chosen)]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text("Token Grab berhasil dibuat.", reply_markup=reply_markup)
+                    query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
+        # Gojek
         elif data == "gojek":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
-                    query.answer(f"Token Gojek Anda:\n\n{chosen}", show_alert=True)
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query=chosen)]]
+                    masked = chosen[:6] + "••••••••"
+                    text = f"Token Gojek berhasil dibuat.\n\n`{masked}`"
+                    keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query_current_chat=chosen)]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text("Token Gojek berhasil dibuat.", reply_markup=reply_markup)
+                    query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
