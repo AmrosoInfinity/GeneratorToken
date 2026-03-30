@@ -2,7 +2,7 @@ import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from utils.remove_token_user import remove_user_token_message
-from utils.button_ownership_utils import is_checktoken_owner
+from utils.button_ownership_utils import is_button_owner
 from support.string import (
     CHECKTOKEN_VALID_MSG,
     CHECKTOKEN_INVALID_MSG,
@@ -12,7 +12,7 @@ from support.string import (
 )
 
 def checktoken_command(update, context):
-    # simpan owner id
+    # simpan owner id di state
     context.user_data["checktoken_state"] = {"owner": update.effective_user.id, "expired": False}
     keyboard = [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -24,14 +24,14 @@ def checktoken_button(update, context):
     chat = update.effective_chat
     state = context.user_data.get("checktoken_state")
 
-    # cek ownership
-    if not is_checktoken_owner(context, chat, user_id, state, query):
+    # gunakan is_button_owner
+    if not is_button_owner(context, chat, user_id, state, query):
         return
 
     # kalau owner → hapus tombol setelah ditekan
     query.answer()
     query.edit_message_text("Silakan kirim token Anda di chat.")
-    # hapus state agar tidak bisa dipakai lagi
+    # hapus state agar tombol tidak bisa dipakai lagi
     context.user_data.pop("checktoken_state", None)
 
 def checktoken_handler(update, context):
