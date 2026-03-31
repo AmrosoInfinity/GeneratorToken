@@ -25,10 +25,14 @@ info= *📌 Cara Meminta Token*
   - Bot tetap akan menghentikan respon permintaan token selama **12 jam**.
 
 *📢 Mohon Perhatian*
-    Anonymously Admin grup tidak dapat dikenali identitas kepemilikan tombolnya saat AmrosolBot *bukan Admin* grup karena telegram menggunakan virtual user. Pastikan bot adalah Admin grup agar bisa membaca ID user Anonymously yang konsisten sebagai Admin. 
+    Anonymously Admin grup tidak dapat dikenali identitas kepemilikan tombolnya saat AmrosolBot *bukan Admin* grup karena telegram menggunakan virtual user. Pastikan bot adalah Admin grup agar bisa membaca ID user Anonymously yang konsisten sebagai Admin.
+
+    AmrosolBot mengunci permintaan identik, setiap 1 token hanya diberikan untuk 3 user, Bot tidak akan mengirim token yang sudah memenuhi slot, max kuota 3 kali request dapat di gunakan hanya ketika saat bot generate token ternyata sudah penuh slot untuk token identik tersebut. 
+
+    AmrosolBot memperketat fungsi permintaan token untuk meminimalkan percepatan waktu *revoked token*. Sekarang semua bergantung pada kalian, JANGAN SEBARKAN TOKEN YANG ADA DAPATKAN! 
 
 ♻️ *UPDATE*
-⏳ 2026-21-3 15:38WIB
+⏳ 2026-1-4 04:07WIB
 📜 Fix feature
 - Add button ownership
 - Fix an anonymously admin button ownership issue
