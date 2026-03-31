@@ -11,9 +11,6 @@ from utils.chat_timer_utils import set_expire_timer
 # mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
-# mapping token -> set of user_ids yang sudah pakai
-token_usage = {}
-
 # === Helper untuk hapus pesan ===
 def delete_message(context):
     job = context.job
@@ -22,20 +19,16 @@ def delete_message(context):
     try:
         context.bot.delete_message(chat_id=chat_id, message_id=message_id)
     except Exception as e:
-        print(f"Failed to delete message {message_id}: {e}")
+        print(f"[DEBUG] Failed to delete message {message_id}: {e}")
 
 # === Validasi token usage ===
-def can_use_token(token, user_id):
+def can_use_token(token, user_id, token_usage):
     """Return True jika token masih bisa dipakai, False kalau sudah limit."""
-    users = token_usage.get(token, set())
-
-    # kalau sudah dipakai 3 user unik, token habis
+    users = set(token_usage.get(token, []))
     if len(users) >= 3:
         return False
-
-    # tambahkan user_id baru
     users.add(user_id)
-    token_usage[token] = users
+    token_usage[token] = list(users)
     return True
 
 # === Menu utama token ===
@@ -67,7 +60,7 @@ def button_handler(update, context):
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
-    user_requests, user_blocked, user_timezone = load_tmp(user_id)
+    user_requests, user_blocked, user_timezone, token_usage = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
         if chat.type not in ["group", "supergroup"]:
@@ -90,14 +83,14 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     chosen = random.choice(tokens)
-                    if can_use_token(chosen, user_id):
+                    if can_use_token(chosen, user_id, token_usage):
                         msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 5, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                        context.job_queue.run_once(delete_message, 3, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
                     else:
                         query.edit_message_text("⚠️ Token ini sudah dipakai oleh 3 user, tidak tersedia lagi.", parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
 
         # === Gojek ===
         elif data == "gojek":
@@ -105,14 +98,14 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
-                    if can_use_token(chosen, user_id):
+                    if can_use_token(chosen, user_id, token_usage):
                         msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 5, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                        context.job_queue.run_once(delete_message, 3, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
                     else:
                         query.edit_message_text("⚠️ Token ini sudah dipakai oleh 3 user, tidak tersedia lagi.", parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
 
         if state:
             active_button_owner.pop(message_id, None)
@@ -131,7 +124,7 @@ def button_handler(update, context):
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
         user_timezone[str(user_id)] = tz_name
-        save_tmp(user_id, user_requests, user_blocked, user_timezone)
+        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
         query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
         if state:
             active_button_owner.pop(message_id, None)
