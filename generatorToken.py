@@ -1,4 +1,5 @@
 import random
+import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
 
@@ -60,7 +61,7 @@ def button_handler(update, context):
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
-    user_requests, user_blocked, user_timezone, token_usage = load_tmp(user_id)
+    user_requests, user_blocked, user_timezone, token_usage, last_token = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
         if chat.type not in ["group", "supergroup"]:
@@ -77,6 +78,13 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
 
+        # cek apakah user sudah punya token dalam 12 jam terakhir
+        if last_token:
+            last_time = datetime.datetime.fromisoformat(last_token.get("time"))
+            if datetime.datetime.now() - last_time < datetime.timedelta(hours=12):
+                query.edit_message_text("⚠️ Kamu sudah menerima token dalam 12 jam terakhir.", parse_mode="Markdown")
+                return
+
         # === Grab ===
         if data == "grab":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
@@ -86,11 +94,12 @@ def button_handler(update, context):
                     if can_use_token(chosen, user_id, token_usage):
                         msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
                         context.job_queue.run_once(delete_message, 3, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                        last_token = {"service": "Grab", "time": datetime.datetime.now().isoformat()}
                     else:
                         query.edit_message_text("⚠️ Token ini sudah dipakai oleh 3 user, tidak tersedia lagi.", parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
+            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
 
         # === Gojek ===
         elif data == "gojek":
@@ -101,11 +110,12 @@ def button_handler(update, context):
                     if can_use_token(chosen, user_id, token_usage):
                         msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
                         context.job_queue.run_once(delete_message, 3, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                        last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
                     else:
                         query.edit_message_text("⚠️ Token ini sudah dipakai oleh 3 user, tidak tersedia lagi.", parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
+            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
 
         if state:
             active_button_owner.pop(message_id, None)
@@ -124,7 +134,7 @@ def button_handler(update, context):
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
         user_timezone[str(user_id)] = tz_name
-        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
+        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
         query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_name), parse_mode="Markdown")
         if state:
             active_button_owner.pop(message_id, None)
