@@ -11,6 +11,9 @@ from utils.chat_timer_utils import set_expire_timer
 # mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
+# mapping token -> set of user_ids yang sudah pakai
+token_usage = {}
+
 # === Helper untuk hapus pesan ===
 def delete_message(context):
     job = context.job
@@ -20,6 +23,20 @@ def delete_message(context):
         context.bot.delete_message(chat_id=chat_id, message_id=message_id)
     except Exception as e:
         print(f"Failed to delete message {message_id}: {e}")
+
+# === Validasi token usage ===
+def can_use_token(token, user_id):
+    """Return True jika token masih bisa dipakai, False kalau sudah limit."""
+    users = token_usage.get(token, set())
+
+    # kalau sudah dipakai 3 user unik, token habis
+    if len(users) >= 3:
+        return False
+
+    # tambahkan user_id baru
+    users.add(user_id)
+    token_usage[token] = users
+    return True
 
 # === Menu utama token ===
 def token_menu(update, context):
@@ -73,8 +90,11 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     chosen = random.choice(tokens)
-                    msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
-                    context.job_queue.run_once(delete_message, 60, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                    if can_use_token(chosen, user_id):
+                        msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
+                        context.job_queue.run_once(delete_message, 5, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                    else:
+                        query.edit_message_text("⚠️ Token ini sudah dipakai oleh 3 user, tidak tersedia lagi.", parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
@@ -85,8 +105,11 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
-                    msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
-                    context.job_queue.run_once(delete_message, 60, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                    if can_use_token(chosen, user_id):
+                        msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
+                        context.job_queue.run_once(delete_message, 5, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                    else:
+                        query.edit_message_text("⚠️ Token ini sudah dipakai oleh 3 user, tidak tersedia lagi.", parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
