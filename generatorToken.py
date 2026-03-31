@@ -10,9 +10,9 @@ from utils.chat_timer_utils import set_expire_timer
 
 active_button_owner = {}
 
-# GitHub API untuk trigger workflow backend
+# Gunakan FRONTEND_TOKEN untuk trigger workflow backend
 GITHUB_API_URL = "https://api.github.com/repos/AmrosoInfinity/Amrosol_Backend-/actions/workflows/push-token.yml/dispatches"
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # PAT dengan workflow access
+GITHUB_TOKEN = os.getenv("FRONTEND_TOKEN")
 
 def trigger_backend(service, user_id):
     """Trigger workflow backend via GitHub API dispatch"""
@@ -69,7 +69,6 @@ def button_handler(update, context):
         tz_name = user_timezone.get(str(user_id))
         if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
             if trigger_backend(data, user_id):
-                # URL statis, backend workflow akan generate file HTML di repo web
                 url = f"https://amrosol.online/tokens/{data}/{user_id}.html"
                 keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
