@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram.ext import Updater
-from generatorToken import register_token_handlers
+from generatorToken import register_token_menu
 from chatOpenAi import register_chat_handlers
 from appopsPermission import register_appops_handlers
 from commandBot import register_command_handlers
