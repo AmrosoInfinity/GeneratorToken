@@ -8,59 +8,39 @@ from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
 
-# State untuk owner tombol
 active_button_owner = {}
 
-# Ambil URL backend dari environment agar fleksibel
-BACKEND_URL = os.getenv(
-    "BACKEND_URL",
-    "https://raw.githubusercontent.com/AmrosoInfinity/Amrosol_Backend-/main/generate"
-)
+# GitHub API untuk trigger workflow backend
+GITHUB_API_URL = "https://api.github.com/repos/AmrosoInfinity/Amrosol_Backend-/actions/workflows/push-token.yml/dispatches"
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # PAT dengan workflow access
 
-# ---------------------------
-# Helper Functions
-# ---------------------------
-
-def fetch_token_url(service, user_id):
-    """Request ke backend untuk ambil URL token"""
-    try:
-        res = requests.post(BACKEND_URL, json={"service": service, "userId": user_id}, timeout=10)
-        if res.ok:
-            return res.json().get("url")
-    except Exception:
-        return None
-    return None
-
-def show_timezone_menu(query, user_id, context):
-    """Tampilkan menu timezone"""
-    keyboard = [
-        [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
-        [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
-        [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
-    active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
-    set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
-
-# ---------------------------
-# Handlers
-# ---------------------------
+def trigger_backend(service, user_id):
+    """Trigger workflow backend via GitHub API dispatch"""
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
+    payload = {
+        "ref": "main",
+        "inputs": {
+            "service": service,
+            "userId": str(user_id)
+        }
+    }
+    res = requests.post(GITHUB_API_URL, headers=headers, json=payload)
+    return res.status_code == 204
 
 def token_menu(update, context):
-    """Menu awal untuk memilih service token"""
     keyboard = [
         [InlineKeyboardButton("Grab", callback_data="grab"),
          InlineKeyboardButton("Gojek", callback_data="gojek")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
-
     active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
 def button_handler(update, context):
-    """Handler untuk semua tombol callback"""
     query = update.callback_query
     chat = update.effective_chat
     user_id = query.from_user.id
@@ -88,8 +68,9 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
         if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-            url = fetch_token_url(data, user_id)
-            if url:
+            if trigger_backend(data, user_id):
+                # URL statis, backend workflow akan generate file HTML di repo web
+                url = f"https://amrosol.online/tokens/{data}/{user_id}.html"
                 keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
@@ -101,7 +82,15 @@ def button_handler(update, context):
             active_button_owner.pop(message_id, None)
 
     elif data == "set_timezone":
-        show_timezone_menu(query, user_id, context)
+        keyboard = [
+            [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
+            [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
+            [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
+        active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
+        set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
@@ -112,6 +101,5 @@ def button_handler(update, context):
             active_button_owner.pop(message_id, None)
 
 def register_token_handlers(dp):
-    """Register semua handler terkait token"""
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
