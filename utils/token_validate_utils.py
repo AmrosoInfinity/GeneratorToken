@@ -1,5 +1,8 @@
+import os
+import json
+import random
+import datetime
 import requests
-import os, json, datetime, random, requests
 from zoneinfo import ZoneInfo
 from telegram import ChatPermissions
 from support import string
@@ -11,11 +14,23 @@ from support.string import (
     CHECKTOKEN_INVALID_LENGTH_MSG,
 )
 
+# Direktori tmp untuk simpan data user
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TMP_DIR = os.path.join(BASE_DIR, "tmp")
 
+# Konstanta lokasi API Grab
+LAT, LNG = "-6.1901", "106.8326"
+GRAB_API_URL = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={LAT},{LNG}"
+HEADERS_TEMPLATE = {
+    "X-Location": f"{LAT},{LNG}",
+    "Content-Type": "application/json; charset=UTF-8",
+    "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
+}
+
+# -----------------------------
+# Utility untuk file tmp per user
+# -----------------------------
 def tmp_file_for_user(user_id: int):
-    # gunakan satu file per user, tanpa tanggal
     return os.path.join(TMP_DIR, f"user_{user_id}.json")
 
 def save_tmp(user_id, user_requests, user_blocked, user_timezone):
@@ -35,10 +50,12 @@ def load_tmp(user_id):
     if os.path.exists(file):
         with open(file, "r", encoding="utf-8") as f:
             data = json.load(f)
-            user_requests = data.get("user_requests", {})
-            user_blocked = {int(uid): datetime.datetime.fromisoformat(until)
-                            for uid, until in data.get("user_blocked", {}).items()}
-            user_timezone = data.get("user_timezone", {})
+        user_requests = data.get("user_requests", {})
+        user_blocked = {
+            int(uid): datetime.datetime.fromisoformat(until)
+            for uid, until in data.get("user_blocked", {}).items()
+        }
+        user_timezone = data.get("user_timezone", {})
         print(f"[DEBUG] Loaded data user {user_id}: {data}")
         return user_requests, user_blocked, user_timezone
     else:
@@ -46,16 +63,18 @@ def load_tmp(user_id):
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         return user_requests, user_blocked, user_timezone
 
+# -----------------------------
+# Limit checker untuk grup
+# -----------------------------
 def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
     chat = update.effective_chat
     user = update.effective_user
 
-    # hanya untuk grup
     if chat.type not in ["group", "supergroup"]:
         update.callback_query.edit_message_text("Command ini hanya bisa digunakan di dalam grup.")
         return False
 
-    # cek apakah user sudah diblokir
+    # cek blokir
     if user_id in user_blocked:
         until = user_blocked[user_id]
         if datetime.datetime.now(ZoneInfo(tz_name)) < until:
@@ -67,7 +86,7 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
         else:
             del user_blocked[user_id]
 
-    # hitung request harian (key tetap pakai tanggal agar limit reset tiap hari)
+    # hitung request harian
     today = datetime.date.today().isoformat()
     key = f"{user_id}_{today}"
     count = user_requests.get(key, 0) + 1
@@ -76,7 +95,6 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
     bot_member = context.bot.get_chat_member(chat.id, context.bot.id)
     is_admin = bot_member.status in ["administrator", "creator"]
 
-    # jika lebih dari 3 kali
     if count > 3:
         if is_admin:
             until_date = datetime.datetime.now(ZoneInfo(tz_name)) + datetime.timedelta(minutes=30)
@@ -98,12 +116,10 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
                     parse_mode="HTML"
                 )
 
-        # tetap blokir user secara internal selama 12 jam
         user_blocked[user_id] = datetime.datetime.now(ZoneInfo(tz_name)) + datetime.timedelta(hours=12)
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         return False
 
-    # kalau masih <= 3 kali
     remaining = 3 - count
     now = datetime.datetime.now(ZoneInfo(tz_name)).strftime("%Y-%m-%d %H:%M:%S")
     update.callback_query.edit_message_text(
@@ -113,6 +129,9 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
     save_tmp(user_id, user_requests, user_blocked, user_timezone)
     return True
 
+# -----------------------------
+# Token fetcher
+# -----------------------------
 def fetch_tokens(raw_url: str):
     try:
         url = f"{raw_url}?nocache={random.randint(1, 100000)}"
@@ -124,32 +143,25 @@ def fetch_tokens(raw_url: str):
         print("[DEBUG] Error:", e)
         return []
 
+# -----------------------------
+# Token validator
+# -----------------------------
 def validate_token(token: str):
     token = token.strip()
     token_length = len(token)
 
-    # cek prefix
     if not token.startswith("ey"):
         return False, CHECKTOKEN_INVALID_PREFIX_MSG
 
-    # cek panjang
     if token_length < 100:
         return False, CHECKTOKEN_INVALID_LENGTH_MSG
 
-    # cek ke API
-    lat, lng = "-6.1901", "106.8326"
-    url = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={lat},{lng}"
-
-    headers = {
-        "Authorization": token,
-        "X-Location": f"{lat},{lng}",
-        "x-mts-ssid": token,
-        "Content-Type": "application/json; charset=UTF-8",
-        "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
-    }
+    headers = dict(HEADERS_TEMPLATE)
+    headers["Authorization"] = token
+    headers["x-mts-ssid"] = token
 
     try:
-        resp = requests.get(url, headers=headers, timeout=10)
+        resp = requests.get(GRAB_API_URL, headers=headers, timeout=10)
         status_code = resp.status_code
         if status_code == 200:
             return True, CHECKTOKEN_VALID_MSG.format(length=token_length, status=status_code)
