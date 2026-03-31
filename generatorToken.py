@@ -1,14 +1,15 @@
-import random, hashlib
+import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
-from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
+from utils.token_validate_utils import check_limit, save_tmp, load_tmp
 from support import string
 from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
 
 active_button_owner = {}
-user_token_cache = {}  # mapping (user_id, service, hash_token) -> token
+
+BACKEND_URL = "https://backend.amrosol.com/generate"
 
 def token_menu(update, context):
     keyboard = [
@@ -52,24 +53,20 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
         if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-            if data == "grab":
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
-                service = "grab"
-            else:
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
-                service = "gojek"
+            try:
+                payload = {"service": data, "userId": user_id}
+                res = requests.post(BACKEND_URL, json=payload, timeout=10)
+                if res.status_code == 200:
+                    backend_data = res.json()
+                    url = backend_data["url"]
 
-            if tokens:
-                chosen = random.choice(tokens)
-                hash_token = hashlib.sha256(chosen.encode()).hexdigest()[:16]
-                user_token_cache[(user_id, service, hash_token)] = chosen
-
-                url = f"https://amrosol.online/{service}/{user_id}/{hash_token}"
-                keyboard = [[InlineKeyboardButton(f"Ambil Token {service.title()}", url=url)]]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                query.edit_message_text(string.TOKEN_READY.format(service=service.title()), reply_markup=reply_markup)
-            else:
-                query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=service.title()), parse_mode="Markdown")
+                    keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
+                else:
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
+            except Exception as e:
+                query.edit_message_text(f"Error komunikasi dengan backend: {e}")
 
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         if state:
