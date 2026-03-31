@@ -33,13 +33,14 @@ HEADERS_TEMPLATE = {
 def tmp_file_for_user(user_id: int):
     return os.path.join(TMP_DIR, f"user_{user_id}.json")
 
-def save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage=None):
+def save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage=None, last_token=None):
     os.makedirs(TMP_DIR, exist_ok=True)
     data = {
         "user_requests": user_requests,
         "user_blocked": {str(uid): until.isoformat() for uid, until in user_blocked.items()},
         "user_timezone": user_timezone,
-        "token_usage": token_usage or {}
+        "token_usage": token_usage or {},
+        "last_token": last_token or {}
     }
     file = tmp_file_for_user(user_id)
     with open(file, "w", encoding="utf-8") as f:
@@ -58,12 +59,12 @@ def load_tmp(user_id):
         }
         user_timezone = data.get("user_timezone", {})
         token_usage = data.get("token_usage", {})
-        print(f"[DEBUG] Loaded data user {user_id}: {data}")
-        return user_requests, user_blocked, user_timezone, token_usage
+        last_token = data.get("last_token", {})
+        return user_requests, user_blocked, user_timezone, token_usage, last_token
     else:
-        user_requests, user_blocked, user_timezone, token_usage = {}, {}, {}, {}
-        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage)
-        return user_requests, user_blocked, user_timezone, token_usage
+        user_requests, user_blocked, user_timezone, token_usage, last_token = {}, {}, {}, {}, {}
+        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
+        return user_requests, user_blocked, user_timezone, token_usage, last_token
 # -----------------------------
 # Limit checker untuk grup
 # -----------------------------
