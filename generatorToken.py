@@ -24,7 +24,6 @@ def token_menu(update, context):
     }
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
-
 def button_handler(update, context):
     query = update.callback_query
     chat = update.effective_chat
@@ -53,35 +52,30 @@ def button_handler(update, context):
             return
 
         tz_name = user_timezone.get(str(user_id))
-
-        # Grab
         if data == "grab":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
                 if tokens:
                     chosen = random.choice(tokens)
-                    # tampilkan token tersamar di chat
-                    masked = chosen[:6] + "••••••••"
-                    text = f"Token Grab berhasil dibuat.\n\n`{masked}`"
-                    # tombol salin token asli penuh
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query_current_chat=chosen)]]
+                    keyboard = [[InlineKeyboardButton("Copy", callback_data=f"copy_token:{message_id}")]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+                    query.edit_message_text(string.TOKEN_GRAB.format(token=chosen),
+                                            parse_mode="Markdown",
+                                            reply_markup=reply_markup)
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
 
-        # Gojek
         elif data == "gojek":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     chosen = random.choice(tokens)
-                    masked = chosen[:6] + "••••••••"
-                    text = f"Token Gojek berhasil dibuat.\n\n`{masked}`"
-                    keyboard = [[InlineKeyboardButton("📋 Salin Token Anda", switch_inline_query_current_chat=chosen)]]
+                    keyboard = [[InlineKeyboardButton("Copy", callback_data=f"copy_token:{message_id}")]]
                     reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+                    query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen),
+                                            parse_mode="Markdown",
+                                            reply_markup=reply_markup)
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone)
@@ -108,11 +102,27 @@ def button_handler(update, context):
         if state:
             active_button_owner.pop(message_id, None)
 
+def copy_token_handler(update, context):
+    query = update.callback_query
+    chat = update.effective_chat
+    user_id = query.from_user.id
+    message_id = query.message.message_id
+
+    state = active_button_owner.get(message_id)
+    if not is_button_owner(context, chat, user_id, state, query):
+        return
+
+    try:
+        context.bot.delete_message(chat.id, message_id)
+    except Exception as e:
+        print("[DEBUG] Gagal hapus pesan token:", e)
+
+    query.answer("Token disalin, pesan dihapus.", show_alert=False)
+
+    if state:
+        active_button_owner.pop(message_id, None)
 
 def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
-
-
-def register_token_handlers(dp):
-    register_token_menu(dp)
+    dp.add_handler(CallbackQueryHandler(copy_token_handler, pattern="^copy_token"))
