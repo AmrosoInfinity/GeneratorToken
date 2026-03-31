@@ -12,7 +12,40 @@ from utils.chat_timer_utils import set_expire_timer
 active_button_owner = {}
 
 # Ambil URL backend dari environment agar fleksibel
-BACKEND_URL = os.getenv("BACKEND_URL", "https://raw.githubusercontent.com/AmrosoInfinity/Amrosol_Backend-/main/generate")
+BACKEND_URL = os.getenv(
+    "BACKEND_URL",
+    "https://raw.githubusercontent.com/AmrosoInfinity/Amrosol_Backend-/main/generate"
+)
+
+# ---------------------------
+# Helper Functions
+# ---------------------------
+
+def fetch_token_url(service, user_id):
+    """Request ke backend untuk ambil URL token"""
+    try:
+        res = requests.post(BACKEND_URL, json={"service": service, "userId": user_id}, timeout=10)
+        if res.ok:
+            return res.json().get("url")
+    except Exception:
+        return None
+    return None
+
+def show_timezone_menu(query, user_id, context):
+    """Tampilkan menu timezone"""
+    keyboard = [
+        [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
+        [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
+        [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
+    active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
+    set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
+
+# ---------------------------
+# Handlers
+# ---------------------------
 
 def token_menu(update, context):
     """Menu awal untuk memilih service token"""
@@ -41,12 +74,10 @@ def button_handler(update, context):
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
-        # Hanya boleh di grup
         if chat.type not in ["group", "supergroup"]:
             send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
             return
 
-        # Pastikan timezone sudah di-set
         if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -57,39 +88,20 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
         if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-            try:
-                payload = {"service": data, "userId": user_id}
-                res = requests.post(BACKEND_URL, json=payload, timeout=10)
-
-                if res.ok:
-                    backend_data = res.json()
-                    url = backend_data.get("url")
-                    if url:
-                        keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
-                        reply_markup = InlineKeyboardMarkup(keyboard)
-                        query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
-                    else:
-                        query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
-
-            except Exception as e:
-                query.edit_message_text(f"❌ Error komunikasi dengan backend: {e}")
+            url = fetch_token_url(data, user_id)
+            if url:
+                keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
+            else:
+                query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
 
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         if state:
             active_button_owner.pop(message_id, None)
 
     elif data == "set_timezone":
-        keyboard = [
-            [InlineKeyboardButton(string.TIMEZONE_WIB, callback_data="tz_Asia/Jakarta")],
-            [InlineKeyboardButton(string.TIMEZONE_WITA, callback_data="tz_Asia/Makassar")],
-            [InlineKeyboardButton(string.TIMEZONE_WIT, callback_data="tz_Asia/Jayapura")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=reply_markup)
-        active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
-        set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
+        show_timezone_menu(query, user_id, context)
 
     elif data.startswith("tz_"):
         tz_name = data.replace("tz_", "")
