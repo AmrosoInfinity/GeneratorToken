@@ -2,7 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from utils.remove_token_user import remove_user_token_message
 from utils.button_ownership_utils import is_button_owner
-from utils.token_validator import validate_token
+from utils.token_validate_utils import validate_token
 from support.string import CHECKTOKEN_PROMPT_MSG
 
 def checktoken_command(update, context):
