@@ -29,6 +29,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }} 
         run: |
           python bot.py &
           BOT_PID=$!
