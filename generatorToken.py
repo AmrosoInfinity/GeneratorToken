@@ -1,5 +1,6 @@
 import os
 import requests
+import hashlib
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
 from utils.token_validate_utils import check_limit, save_tmp, load_tmp
@@ -7,6 +8,7 @@ from support import string
 from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
+from utils.token_utils import fetch_tokens_from_gist
 
 active_button_owner = {}
 
@@ -29,6 +31,11 @@ def trigger_backend(service, user_id):
     }
     res = requests.post(GITHUB_API_URL, headers=headers, json=payload)
     return res.status_code == 204
+
+def build_token_url(service, user_id, token_value):
+    """Bangun URL rapi dengan hash token"""
+    hash_token = hashlib.sha256(token_value.encode()).hexdigest()[:12]
+    return f"https://amrosol.online/{service}/{user_id}/{hash_token}.html"
 
 def token_menu(update, context):
     keyboard = [
@@ -68,11 +75,19 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
         if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-            if trigger_backend(data, user_id):
-                url = f"https://amrosol.online/tokens/{data}/{user_id}.html"
-                keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
+            # Ambil token dari gist
+            tokens = fetch_tokens_from_gist(data)
+            if tokens:
+                index = int(user_id) % len(tokens)
+                token_value = tokens[index]
+
+                if trigger_backend(data, user_id):
+                    url = build_token_url(data, user_id, token_value)
+                    keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
+                else:
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
             else:
                 query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
 
