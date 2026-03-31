@@ -9,7 +9,7 @@ from utils.chat_timer_utils import set_expire_timer
 
 active_button_owner = {}
 
-BACKEND_URL = "https://backend.amrosol.com/generate"
+BACKEND_URL = "http://127.0.0.1:5000/generate"
 
 def token_menu(update, context):
     keyboard = [
