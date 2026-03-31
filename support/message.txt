@@ -29,7 +29,7 @@ info= *📌 Cara Meminta Token*
 
     AmrosolBot mengunci permintaan identik, setiap 1 token hanya diberikan untuk 3 user, Bot tidak akan mengirim token yang sudah memenuhi slot, max kuota 3 kali request dapat di gunakan hanya ketika saat bot generate token ternyata sudah penuh slot untuk token identik tersebut. 
 
-    AmrosolBot memperketat fungsi permintaan token untuk meminimalkan percepatan waktu *revoked token*. Sekarang semua bergantung pada kalian, JANGAN SEBARKAN TOKEN YANG ADA DAPATKAN! 
+    AmrosolBot memperketat fungsi permintaan token untuk meminimalkan percepatan waktu *revoked token*. Sekarang semua bergantung pada kalian,  
 
 ♻️ *UPDATE*
 ⏳ 2026-1-4 04:07WIB
