@@ -1,3 +1,4 @@
+import os
 import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
@@ -7,11 +8,14 @@ from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
 
+# State untuk owner tombol
 active_button_owner = {}
 
-BACKEND_URL = "http://127.0.0.1:5000/generate"
+# Ambil URL backend dari environment agar fleksibel
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:5000/generate")
 
 def token_menu(update, context):
+    """Menu awal untuk memilih service token"""
     keyboard = [
         [InlineKeyboardButton("Grab", callback_data="grab"),
          InlineKeyboardButton("Gojek", callback_data="gojek")]
@@ -19,13 +23,11 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    active_button_owner[msg.message_id] = {
-        "owner": update.effective_user.id,
-        "expired": False
-    }
+    active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
 def button_handler(update, context):
+    """Handler untuk semua tombol callback"""
     query = update.callback_query
     chat = update.effective_chat
     user_id = query.from_user.id
@@ -39,10 +41,12 @@ def button_handler(update, context):
     user_requests, user_blocked, user_timezone = load_tmp(user_id)
 
     if data in ["grab", "gojek"]:
+        # Hanya boleh di grup
         if chat.type not in ["group", "supergroup"]:
             send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
             return
 
+        # Pastikan timezone sudah di-set
         if str(user_id) not in user_timezone:
             keyboard = [[InlineKeyboardButton("Set Timezone", callback_data="set_timezone")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -56,17 +60,21 @@ def button_handler(update, context):
             try:
                 payload = {"service": data, "userId": user_id}
                 res = requests.post(BACKEND_URL, json=payload, timeout=10)
-                if res.status_code == 200:
-                    backend_data = res.json()
-                    url = backend_data["url"]
 
-                    keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
+                if res.ok:
+                    backend_data = res.json()
+                    url = backend_data.get("url")
+                    if url:
+                        keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
+                    else:
+                        query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
+
             except Exception as e:
-                query.edit_message_text(f"Error komunikasi dengan backend: {e}")
+                query.edit_message_text(f"❌ Error komunikasi dengan backend: {e}")
 
         save_tmp(user_id, user_requests, user_blocked, user_timezone)
         if state:
@@ -91,9 +99,7 @@ def button_handler(update, context):
         if state:
             active_button_owner.pop(message_id, None)
 
-def register_token_menu(dp):
+def register_token_handlers(dp):
+    """Register semua handler terkait token"""
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
-
-def register_token_handlers(dp):
-    register_token_menu(dp)
