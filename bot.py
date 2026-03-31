@@ -27,7 +27,7 @@ def main():
 
     # Register semua handler dari modul terpisah
     logger.debug("Registering handlers...")
-    register_token_handlers(dp)       # tombol /token (Grab/Gojek + timezone)
+    register_token_menu(dp)       # tombol /token (Grab/Gojek + timezone)
     register_chat_handlers(dp)        # modul chatOpenAi
     register_appops_handlers(dp)      # modul appopsPermission
     register_command_handlers(dp)     # modul commandBot
