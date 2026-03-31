@@ -15,6 +15,7 @@ info= *📌 Cara Meminta Token*
 
 *⚠️ Batasan Permintaan*
 - Setiap user hanya bisa meminta token **maksimal 3 kali dalam 12 jam**.
+- Setiap user hanya boleh memiliki satu token dalam **12 jam**
 
 *🔒 Aturan Tambahan*
 - Jika bot menjadi *admin* di grup:
