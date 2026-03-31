@@ -1,39 +1,27 @@
-import os
-import requests
+import random
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
-from utils.token_validate_utils import check_limit, save_tmp, load_tmp
+
+from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
 from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
 
+# mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
 
-# Gunakan FRONTEND_TOKEN untuk trigger workflow backend
-GITHUB_API_URL = "https://api.github.com/repos/AmrosoInfinity/Amrosol_Backend-/actions/workflows/push-token.yml/dispatches"
-GITHUB_TOKEN = os.getenv("FRONTEND_TOKEN")
+# === Helper untuk hapus pesan ===
+def delete_message(context):
+    job = context.job
+    chat_id = job.context["chat_id"]
+    message_id = job.context["message_id"]
+    try:
+        context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception as e:
+        print(f"Failed to delete message {message_id}: {e}")
 
-def trigger_backend(service, user_id):
-    """Trigger workflow backend via GitHub API dispatch"""
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json"
-    }
-    payload = {
-        "ref": "main",
-        "inputs": {
-            "service": service,
-            "userId": str(user_id)
-        }
-    }
-    res = requests.post(GITHUB_API_URL, headers=headers, json=payload)
-    return res.status_code == 204
-
-def build_token_url(service, user_id):
-    """Bangun URL rapi (hash dihitung di backend, bot cukup format dasar)"""
-    return f"https://amrosol.online/{service}/{user_id}.html"
-
+# === Menu utama token ===
 def token_menu(update, context):
     keyboard = [
         [InlineKeyboardButton("Grab", callback_data="grab"),
@@ -41,9 +29,14 @@ def token_menu(update, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
-    active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
+
+    active_button_owner[msg.message_id] = {
+        "owner": update.effective_user.id,
+        "expired": False
+    }
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
+# === Handler tombol ===
 def button_handler(update, context):
     query = update.callback_query
     chat = update.effective_chat
@@ -52,6 +45,8 @@ def button_handler(update, context):
     message_id = query.message.message_id
 
     state = active_button_owner.get(message_id)
+
+    # cek kepemilikan tombol
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
@@ -71,16 +66,31 @@ def button_handler(update, context):
             return
 
         tz_name = user_timezone.get(str(user_id))
-        if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-            if trigger_backend(data, user_id):
-                url = build_token_url(data, user_id)
-                keyboard = [[InlineKeyboardButton(f"Ambil Token {data.title()}", url=url)]]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                query.edit_message_text(string.TOKEN_READY.format(service=data.title()), reply_markup=reply_markup)
-            else:
-                query.edit_message_text(string.TOKEN_NOT_FOUND.format(service=data.title()), parse_mode="Markdown")
 
-        save_tmp(user_id, user_requests, user_blocked, user_timezone)
+        # === Grab ===
+        if data == "grab":
+            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
+                if tokens:
+                    chosen = random.choice(tokens)
+                    msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
+                    context.job_queue.run_once(delete_message, 60, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                else:
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
+            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
+        # === Gojek ===
+        elif data == "gojek":
+            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
+                if tokens:
+                    chosen = random.choice(tokens)
+                    msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
+                    context.job_queue.run_once(delete_message, 60, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                else:
+                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
+            save_tmp(user_id, user_requests, user_blocked, user_timezone)
+
         if state:
             active_button_owner.pop(message_id, None)
 
@@ -103,6 +113,10 @@ def button_handler(update, context):
         if state:
             active_button_owner.pop(message_id, None)
 
-def register_token_handlers(dp):
+# === Registrasi handler ===
+def register_token_menu(dp):
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler))
+
+def register_token_handlers(dp):
+    register_token_menu(dp)
