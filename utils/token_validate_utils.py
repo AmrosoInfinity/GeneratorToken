@@ -153,7 +153,7 @@ def validate_token(token: str):
     if not token.startswith("ey"):
         return False, CHECKTOKEN_INVALID_PREFIX_MSG
 
-    if token_length < 100:
+    if token_length < 1500:
         return False, CHECKTOKEN_INVALID_LENGTH_MSG
 
     headers = dict(HEADERS_TEMPLATE)
