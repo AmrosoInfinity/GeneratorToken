@@ -12,7 +12,7 @@ from utils.chat_timer_utils import set_expire_timer
 active_button_owner = {}
 
 # Ambil URL backend dari environment agar fleksibel
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:5000/generate")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://raw.githubusercontent.com/AmrosoInfinity/Amrosol_Backend-/main/generate")
 
 def token_menu(update, context):
     """Menu awal untuk memilih service token"""
