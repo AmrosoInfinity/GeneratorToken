@@ -31,7 +31,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }} 
         run: |
-          python main.py &
+          python bot.py &
           BOT_PID=$!
           # 21420 detik = 5 jam 57 menit (sesuai cron tiap 6 jam)
           sleep 21420
