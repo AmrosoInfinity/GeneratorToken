@@ -31,8 +31,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }} 
         run: |
-          python bot.py &
+          python main.py &
           BOT_PID=$!
+          # 21420 detik = 5 jam 57 menit (sesuai cron tiap 6 jam)
           sleep 21420
           kill $BOT_PID
 
@@ -42,5 +43,14 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add tmp/
           git commit -m "Update tmp data from workflow run" || echo "No changes to commit"
+          git pull --rebase origin main
+          git push
+
+      - name: Commit data folder to repo
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "Update blocked/suspect users data" || echo "No changes to commit"
           git pull --rebase origin main
           git push
