@@ -7,7 +7,8 @@ from appopsPermission import register_appops_handlers
 from commandBot import register_command_handlers
 from checkToken import register_checktoken
 from blockHandler import register_block
-from suspectHandler import register_suspect 
+from suspectHandler import register_suspect
+from groupActivity import register_group_activity
 
 def main():
     # Setup logging (akan tampil di console GitHub Actions)
@@ -33,6 +34,7 @@ def main():
     register_chat_handlers(dp)        # modul chatOpenAi
     register_appops_handlers(dp)      # modul appopsPermission
     register_command_handlers(dp)     # modul commandBot
+    register_group_activity(dp, owner_id=8004967513) 
     register_checktoken(dp, owner_id=8004967513) 
     register_block(dp, owner_id=8004967513)
     register_suspect(dp, owner_id=8004967513) 
