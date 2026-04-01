@@ -30,7 +30,7 @@ def record_token_request(user_id: int):
     suspect_users[str(user_id)] = history
     save_suspects()
 
-def is_suspect(user_id: int, threshold=3) -> bool:
+def is_suspect(user_id: int, threshold=5) -> bool:
     history = suspect_users.get(str(user_id), [])
     return len(history) >= threshold
 
