@@ -13,12 +13,14 @@ def checktoken_command(update, context):
             [[InlineKeyboardButton("Masukkan Token", callback_data="checktoken")]]
         )
     )
+    # simpan state
     context.user_data["checktoken_state"] = {
         "owner": update.effective_user.id,
         "prompt_id": sent.message_id,
         "expired": False
     }
 
+    # aktifkan timer 30 detik untuk hapus prompt jika tidak ada interaksi
     set_expire_timer(
         context,
         update.effective_chat.id,
@@ -40,7 +42,8 @@ def checktoken_button(update, context):
 
 def checktoken_handler(update, context):
     # hanya jalan kalau user memang sedang dalam state checktoken
-    if "checktoken_state" not in context.user_data:
+    state = context.user_data.get("checktoken_state")
+    if not state or state.get("expired"):
         return
 
     raw_text = update.message.text
@@ -49,14 +52,14 @@ def checktoken_handler(update, context):
     is_valid, message = validate_token(token)
     update.message.reply_text(message)
 
+    # hapus pesan token user agar tidak tersimpan
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
 
-    state = context.user_data.get("checktoken_state")
-    if state and "prompt_id" in state:
-        try:
-            context.bot.delete_message(update.message.chat_id, state["prompt_id"])
-        except Exception:
-            pass
+    # hapus prompt awal
+    try:
+        context.bot.delete_message(update.message.chat_id, state["prompt_id"])
+    except Exception:
+        pass
 
     # bersihkan state supaya tidak tangkap chat lain
     context.user_data.pop("checktoken_state", None)
