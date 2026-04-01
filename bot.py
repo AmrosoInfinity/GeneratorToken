@@ -6,6 +6,8 @@ from chatOpenAi import register_chat_handlers
 from appopsPermission import register_appops_handlers
 from commandBot import register_command_handlers
 from checkToken import register_checktoken
+from blockHandler import register_block
+from suspectHandler import register_suspect 
 
 def main():
     # Setup logging (akan tampil di console GitHub Actions)
@@ -32,6 +34,8 @@ def main():
     register_appops_handlers(dp)      # modul appopsPermission
     register_command_handlers(dp)     # modul commandBot
     register_checktoken(dp)
+    register_block(dp, owner_id=8004967513)
+    register_suspect(dp, owner_id=8004967513) 
     logger.debug("Handlers registered.")
 
     # Jalankan bot
