@@ -4,7 +4,7 @@ from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryH
 from utils.remove_token_user import remove_user_token_message
 from utils.button_ownership_utils import is_button_owner
 from utils.token_validate_utils import validate_token
-from utils.checktoken_abuse import record_check, should_block, warn_or_suspect
+from utils.checktoken_abuse_utils import record_check, should_block, warn_or_suspect
 from support.string import CHECKTOKEN_PROMPT_MSG
 
 def checktoken_command(update, context):
