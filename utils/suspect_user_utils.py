@@ -25,12 +25,12 @@ suspect_users.update(load_suspects())
 def record_token_request(user_id: int):
     now = time.time()
     history = suspect_users.get(str(user_id), [])
-    history = [t for t in history if now - t < 60]  # hanya simpan 1 menit terakhir
+    history = [t for t in history if now - t < 3510]  # hanya simpan 1 menit terakhir
     history.append(now)
     suspect_users[str(user_id)] = history
     save_suspects()
 
-def is_suspect(user_id: int, threshold=5) -> bool:
+def is_suspect(user_id: int, threshold=3) -> bool:
     history = suspect_users.get(str(user_id), [])
     return len(history) >= threshold
 
