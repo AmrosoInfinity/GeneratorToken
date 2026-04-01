@@ -3,6 +3,7 @@ from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryH
 from utils.remove_token_user import remove_user_token_message
 from utils.button_ownership_utils import is_button_owner
 from utils.token_validate_utils import validate_token
+from utils.chat_timer_utils import set_expire_timer
 from support.string import CHECKTOKEN_PROMPT_MSG
 
 def checktoken_command(update, context):
@@ -15,7 +16,15 @@ def checktoken_command(update, context):
     context.user_data["checktoken_state"] = {
         "owner": update.effective_user.id,
         "prompt_id": sent.message_id,
+        "expired": False
     }
+
+    set_expire_timer(
+        context,
+        update.effective_chat.id,
+        sent.message_id,
+        context.user_data
+    )
 
 def checktoken_button(update, context):
     query = update.callback_query
