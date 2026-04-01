@@ -34,7 +34,5 @@ info= *📌 Cara Meminta Token*
 ♻️ *UPDATE*
 ⏳ 2026-1-4 04:07WIB
 📜 Fix feature
-- Add button ownership
-- Fix an anonymously admin button ownership issue
-
+- Adjustment, isHaventTokens is repeated until it matches.
 🙏 Gunakan bot ini dengan bijak agar semua member bisa terbantu.
