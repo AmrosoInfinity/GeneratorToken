@@ -33,7 +33,7 @@ def main():
     register_chat_handlers(dp)        # modul chatOpenAi
     register_appops_handlers(dp)      # modul appopsPermission
     register_command_handlers(dp)     # modul commandBot
-    register_checktoken(dp)
+    register_checktoken(dp, owner_id=8004967513) 
     register_block(dp, owner_id=8004967513)
     register_suspect(dp, owner_id=8004967513) 
     logger.debug("Handlers registered.")
