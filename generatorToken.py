@@ -101,7 +101,7 @@ def button_handler(update, context):
                     chosen = get_available_token(tokens, user_id, token_usage)
                     if chosen:
                         msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 3, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                        context.job_queue.run_once(delete_message, 2, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
                         last_token = {"service": "Grab", "time": datetime.datetime.now().isoformat()}
                     else:
                         query.edit_message_text("⚠️ Semua token sudah dipakai oleh 3 user.", parse_mode="Markdown")
@@ -117,7 +117,7 @@ def button_handler(update, context):
                     chosen = get_available_token(tokens, user_id, token_usage)
                     if chosen:
                         msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 3, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                        context.job_queue.run_once(delete_message, 2, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
                         last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
                     else:
                         query.edit_message_text("⚠️ Semua token sudah dipakai oleh 3 user.", parse_mode="Markdown")
