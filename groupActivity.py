@@ -1,6 +1,6 @@
 import datetime
 from telegram.ext import ChatMemberHandler
-from utils.group_activity_logger import log_group_event, send_daily_report
+from utils.group_activity_logger_utils import log_group_event, send_daily_report
 
 def group_activity_handler(update, context):
     chat = update.effective_chat
