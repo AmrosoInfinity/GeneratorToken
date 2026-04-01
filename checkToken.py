@@ -4,9 +4,36 @@ from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryH
 from utils.remove_token_user import remove_user_token_message
 from utils.button_ownership_utils import is_button_owner
 from utils.token_validate_utils import validate_token
+from utils.checktoken_abuse import record_check, should_block, warn_or_suspect
 from support.string import CHECKTOKEN_PROMPT_MSG
 
 def checktoken_command(update, context):
+    user_id = update.effective_user.id
+    owner_id = context.bot_data.get("owner_id")
+
+    # cek apakah user harus diblokir
+    if should_block(user_id, owner_id):
+        status = warn_or_suspect(user_id, owner_id, context.bot)
+        if status == "warn":
+            update.message.reply_text(
+                "⚠️ Anda terlalu sering melakukan pengecekan token. Tunggu 12 jam sebelum mencoba lagi."
+            )
+            return
+        elif status == "suspect":
+            update.message.reply_text("🚫 Akses checktoken Anda diblokir sementara.")
+            # jika user admin/owner grup → bot keluar
+            chat = update.effective_chat
+            if chat.type in ["group", "supergroup"]:
+                admins = context.bot.get_chat_administrators(chat.id)
+                for admin in admins:
+                    if admin.user.id == user_id:
+                        try:
+                            context.bot.leave_chat(chat.id)
+                        except Exception:
+                            pass
+                        break
+            return
+
     sent = update.message.reply_text(
         CHECKTOKEN_PROMPT_MSG,
         reply_markup=InlineKeyboardMarkup(
@@ -14,7 +41,7 @@ def checktoken_command(update, context):
         )
     )
     context.user_data["checktoken_state"] = {
-        "owner": update.effective_user.id,
+        "owner": user_id,
         "prompt_id": sent.message_id,
         "expired": False
     }
@@ -46,7 +73,6 @@ def checktoken_button(update, context):
 
 def checktoken_handler(update, context):
     state = context.user_data.get("checktoken_state")
-    # hanya jalan kalau ada state dan belum expired
     if not state or state.get("expired"):
         return
 
@@ -59,16 +85,19 @@ def checktoken_handler(update, context):
     # hapus pesan token user agar tidak tersimpan
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
 
+    # catat aktivitas hanya kalau token valid dari bot
+    record_check(update.effective_user.id, is_valid)
+
     # hapus prompt awal
     try:
         context.bot.delete_message(update.message.chat_id, state["prompt_id"])
     except Exception:
         pass
 
-    # bersihkan state
     context.user_data.pop("checktoken_state", None)
 
-def register_checktoken(dp):
+def register_checktoken(dp, owner_id: int):
+    dp.bot_data["owner_id"] = owner_id
     dp.add_handler(CommandHandler("checktoken", checktoken_command))
     dp.add_handler(CallbackQueryHandler(checktoken_button, pattern="^checktoken$"))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, checktoken_handler))
