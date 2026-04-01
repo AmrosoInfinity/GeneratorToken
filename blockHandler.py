@@ -1,5 +1,5 @@
 from telegram.ext import CommandHandler, MessageHandler, Filters
-from utils.block_user import block_user, unblock_user, is_blocked
+from utils.block_user_utils import block_user, unblock_user, is_blocked
 
 def block_command(update, context):
     # hanya owner yang boleh blokir
