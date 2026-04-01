@@ -1,3 +1,4 @@
+import threading
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from utils.remove_token_user import remove_user_token_message
@@ -18,6 +19,19 @@ def checktoken_command(update, context):
         "expired": False
     }
 
+    # Timer 30 detik untuk hapus prompt jika tidak ada interaksi
+    def expire_prompt():
+        state = context.user_data.get("checktoken_state")
+        if state and not state["expired"] and state["prompt_id"] == sent.message_id:
+            try:
+                context.bot.delete_message(update.effective_chat.id, sent.message_id)
+            except Exception:
+                pass
+            state["expired"] = True
+            context.user_data.pop("checktoken_state", None)
+
+    threading.Timer(30, expire_prompt).start()
+
 def checktoken_button(update, context):
     query = update.callback_query
     user_id = query.from_user.id
@@ -31,8 +45,9 @@ def checktoken_button(update, context):
     query.edit_message_text("Silakan kirim token Anda di chat.")
 
 def checktoken_handler(update, context):
-    # hanya jalan kalau user memang sedang dalam state checktoken
-    if "checktoken_state" not in context.user_data:
+    state = context.user_data.get("checktoken_state")
+    # hanya jalan kalau ada state dan belum expired
+    if not state or state.get("expired"):
         return
 
     raw_text = update.message.text
@@ -41,16 +56,16 @@ def checktoken_handler(update, context):
     is_valid, message = validate_token(token)
     update.message.reply_text(message)
 
+    # hapus pesan token user agar tidak tersimpan
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
 
-    state = context.user_data.get("checktoken_state")
-    if state and "prompt_id" in state:
-        try:
-            context.bot.delete_message(update.message.chat_id, state["prompt_id"])
-        except Exception:
-            pass
+    # hapus prompt awal
+    try:
+        context.bot.delete_message(update.message.chat_id, state["prompt_id"])
+    except Exception:
+        pass
 
-    # bersihkan state supaya tidak tangkap chat lain
+    # bersihkan state
     context.user_data.pop("checktoken_state", None)
 
 def register_checktoken(dp):
