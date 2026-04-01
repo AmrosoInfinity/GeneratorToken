@@ -1,5 +1,5 @@
 from telegram.ext import MessageHandler, Filters
-from utils.suspect_user import record_token_request, is_suspect, get_all_suspects
+from utils.suspect_user_utils import record_token_request, is_suspect, get_all_suspects
 
 def monitor_token_requests(update, context):
     user_id = update.effective_user.id
