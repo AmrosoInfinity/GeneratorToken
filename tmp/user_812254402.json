@@ -1,7 +1,18 @@
 {
-  "user_requests": {},
+  "user_requests": {
+    "812254402_2026-04-02": 1
+  },
   "user_blocked": {},
   "user_timezone": {
     "812254402": "Asia/Jakarta"
+  },
+  "token_usage": {
+    "eyJhbGciOiJkaXIiLCJjdHkiOiJKV1QiLCJlbmMiOiJBMTI4R0NNIiwidHlwIjoiSldUIiwiemlwIjoiREVGIn0..KiYaXftbCERXQCki.69AX0y-hD0jFpZhv8brbVwe36EIbDYY9ZkrkeVuLpF_6kf0qFb7Y62g5ddhaCcBGsoEQzUoQzEfo0YD34nHSG_Wkv7dkNA4c4U2Z1dGtW_5w2ul3xNgdIUo0nGG8tb6IHGlaVXcwTdLXWfucFoYUip5YZkBK2V7iW5CDo_UEyky9HldcAvon4ZXu-o10C5Pz_dEOQLos0VhFpbknGF3mTJi66RcsKL15qkIgOTfNv7FSZs_f4soRbNQWEZPSRAjEs2UOIEcYW-tE8onMy-asMKYyIoBSxwAQRwi6A1oClhcq8icGZNQa4IbNFA-FUDA0gY6pk73Wn2opnHi-052kbiJuPVPkbLSzRedEKW_dXuOZLEVkCRGUyYpBOl-vpZ3GW5zcWQjA2LnhYebtCpC6-wxCCk-sQ6DdSZ5PaonjpYVPgd8_8uqAdUc8SissgN5xAmWeKIUOIp3caxepNzuDWSSX9OTG1BRTquGSu6HsHV7RchCDPAIjhXt5jTxGiaDZBTNQ6BlfsnqQFpw2rFWaUkKxaHtt7w6nKGF8rHOOqLftTrHzlMX90GliBODTQBFp_zf_UBnxE1djm79CJK0pT-bdbPhE5Ef_MiNd8DQcEPBLam7eQZE8hWH2-LlTH4KvDOdP5aSMsg0aECHAUc33U7htJBinjA-IdVchdTs-N5kCZ-drcCC_p9c8uaxKF5-Bou0-vJTZSf1B6-VZZQaGrTvY69yYCqpo98CKOceDB0TaPTYUVAFEpHLaTpj_77ppvdkQnJWsU6-jv4UhBf5-gDRHQI4NDtTpze6yPhGuNlzCoZyxaNt0uvkVzhAEST-RY_NaiekcC1f3NS4pDEbJz8Ma7s-fG2orYjev_rLgAl-Dyu6xfH99eCs1Sm2GKTk8qdfc_uJJRYtAiVi2qXRvtLqBHuCknKW5949kznDdXlsvzpa9ht0IZmW6v1Uf-QKUa1H2dOTMfkPKebAL6E6MVOEZsUjaXWv43Fl2F1-4NpQNK2L4o9Oxko8px-Srek-vi_AT2GD4T6dUpQ21eu5nyjxtHs7uX8OTtneCnpaN9ejZHgKflgTqjgs2GgIU0SFbPq-sgWOyBfGFenjIOBx7LHtX.E7DU_2n4_oxbuNx0iOMGGw": [
+      812254402
+    ]
+  },
+  "last_token": {
+    "service": "Gojek",
+    "time": "2026-04-02T02:33:05.836440"
   }
 }
