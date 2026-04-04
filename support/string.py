@@ -31,6 +31,10 @@ CHECKTOKEN_VALID_MSG = (
     "📜 Selamat Token Grab bisa digunakan, \n Semangat bekerja pejuang rupiah, tetap ingat keluarga dirumah"
 )
 
+CHECKTOKEN_SOURCE_AMROSOL_MSG = "🔑 Sumber token: Amrosol Token"
+CHECKTOKEN_SOURCE_EXTERNAL_MSG = "🔑 Sumber token: {name} [external]"
+CHECKTOKEN_SOURCE_UNKNOWN_MSG = "🔑 Sumber token: Unknown"
+
 CHECKTOKEN_INVALID_MSG = (
     "❌ Token tidak valid.\n"
     "🔢 Panjang token: {length} karakter\n"
