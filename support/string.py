@@ -51,11 +51,11 @@ CHECKTOKEN_PROMPT_MSG = (
 # Pesan kesalahan spesifik
 CHECKTOKEN_INVALID_PREFIX_MSG = (
     "⚠️ Token tidak valid karena karakter awal bukan 'ey'. "
-    "Walaupun panjang lebih dari 100, tetap bukan token Grab."
+    "Walaupun panjang lebih dari 1000, tetap bukan token Grab."
 )
 
 CHECKTOKEN_INVALID_LENGTH_MSG = (
-    "⚠️ Token tidak valid karena panjang di bawah 100 karakter. "
+    "⚠️ Token tidak valid karena panjang di bawah 1000 karakter. "
     "Meskipun diawali 'ey', panjang tidak wajar sehingga bukan token Grab."
 )
 
