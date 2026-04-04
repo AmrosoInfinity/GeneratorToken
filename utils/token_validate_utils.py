@@ -2,6 +2,7 @@ import os
 import json
 import random
 import datetime
+import uuid
 import requests
 from zoneinfo import ZoneInfo
 from telegram import ChatPermissions
@@ -12,26 +13,26 @@ from support.string import (
     CHECKTOKEN_ERROR_MSG,
     CHECKTOKEN_INVALID_PREFIX_MSG,
     CHECKTOKEN_INVALID_LENGTH_MSG,
+    CHECKTOKEN_SOURCE_AMROSOL_MSG,
+    CHECKTOKEN_SOURCE_EXTERNAL_MSG,
+    CHECKTOKEN_SOURCE_UNKNOWN_MSG,
 )
 
-# Direktori tmp untuk simpan data user
+# -----------------------------
+# Konstanta & Direktori
+# -----------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TMP_DIR = os.path.join(BASE_DIR, "tmp")
 
-# Konstanta lokasi API Grab
-LAT, LNG = "-6.1901", "106.8326"
-GRAB_API_URL = f"https://p.grabtaxi.com/api/passenger/v3/grabfood/content/restaurants?latlng={LAT},{LNG}"
-HEADERS_TEMPLATE = {
-    "X-Location": f"{LAT},{LNG}",
-    "Content-Type": "application/json; charset=UTF-8",
-    "User-Agent": "Grab/5.397.0 (Android 15; Build 139598668)"
-}
+PROFILE_URL = "https://p.grabtaxi.com/api/passenger/v3/profile"
+USER_AGENT = "Grab/5.397.0 (Android 15; Build 139598668)"
 
 # -----------------------------
 # Utility untuk file tmp per user
 # -----------------------------
-def tmp_file_for_user(user_id: int):
+def tmp_file_for_user(user_id: int) -> str:
     return os.path.join(TMP_DIR, f"user_{user_id}.json")
+
 
 def save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage=None, last_token=None):
     os.makedirs(TMP_DIR, exist_ok=True)
@@ -45,7 +46,7 @@ def save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage=No
     file = tmp_file_for_user(user_id)
     with open(file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
-    print(f"[DEBUG] Menyimpan data user {user_id} ke {file}")
+
 
 def load_tmp(user_id):
     file = tmp_file_for_user(user_id)
@@ -65,6 +66,7 @@ def load_tmp(user_id):
         user_requests, user_blocked, user_timezone, token_usage, last_token = {}, {}, {}, {}, {}
         save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
         return user_requests, user_blocked, user_timezone, token_usage, last_token
+
 # -----------------------------
 # Limit checker untuk grup
 # -----------------------------
@@ -111,8 +113,7 @@ def check_limit(update, context, tz_name, user_id, user_requests, user_blocked, 
                     string.LIMIT_EXCEEDED.format(mention=user.mention_html(), id=user.id),
                     parse_mode="HTML"
                 )
-            except Exception as e:
-                print("[DEBUG] Gagal mute:", e)
+            except Exception:
                 update.callback_query.edit_message_text(
                     string.LIMIT_MUTE_FAILED.format(mention=user.mention_html(), id=user.id),
                     parse_mode="HTML"
@@ -141,33 +142,54 @@ def fetch_tokens(raw_url: str):
         if r.status_code == 200:
             return r.text.strip().splitlines()
         return []
-    except Exception as e:
-        print("[DEBUG] Error:", e)
+    except Exception:
         return []
 
 # -----------------------------
-# Token validator
+# Token validator (profile-based)
 # -----------------------------
-def validate_token(token: str):
+def _is_token_format_valid(token: str) -> tuple[bool, str | None]:
     token = token.strip()
-    token_length = len(token)
-
     if not token.startswith("ey"):
         return False, CHECKTOKEN_INVALID_PREFIX_MSG
-
-    if token_length < 1500:
+    if len(token) < 1500:
         return False, CHECKTOKEN_INVALID_LENGTH_MSG
+    return True, None
 
-    headers = dict(HEADERS_TEMPLATE)
-    headers["Authorization"] = token
-    headers["x-mts-ssid"] = token
+
+def _build_headers(token: str) -> dict:
+    return {
+        "User-Agent": USER_AGENT,
+        "Accept-Encoding": "gzip",
+        "accept-language": "id-ID;q=1.0, en-US;q=0.9, en;q=0.8",
+        "x-request-id": str(uuid.uuid4()),
+        "x-mts-ssid": token,
+    }
+
+
+def validate_token(token: str) -> tuple[bool, str]:
+    """Validasi token dengan memanggil API profile Grab."""
+    is_valid_format, error_msg = _is_token_format_valid(token)
+    if not is_valid_format:
+        return False, error_msg
 
     try:
-        resp = requests.get(GRAB_API_URL, headers=headers, timeout=10)
+        resp = requests.get(PROFILE_URL, headers=_build_headers(token), timeout=10)
         status_code = resp.status_code
         if status_code == 200:
-            return True, CHECKTOKEN_VALID_MSG.format(length=token_length, status=status_code)
+            data = resp.json()
+            name = data.get("name", "")
+
+            # Tentukan sumber berdasarkan nilai name
+            if name == "akun inject doang":
+                source_info = CHECKTOKEN_SOURCE_AMROSOL_MSG
+            else:
+                source_info = CHECKTOKEN_SOURCE_EXTERNAL_MSG.format(name=name)
+
+            return True, f"{CHECKTOKEN_VALID_MSG.format(length=len(token), status=status_code)}\n{source_info}"
         else:
-            return False, CHECKTOKEN_INVALID_MSG.format(length=token_length, status=status_code)
+            # Jika invalid, sumber dianggap unknown
+            source_info = CHECKTOKEN_SOURCE_UNKNOWN_MSG
+            return False, f"{CHECKTOKEN_INVALID_MSG.format(length=len(token), status=status_code)}\n{source_info}"
     except Exception as e:
         return False, CHECKTOKEN_ERROR_MSG.format(error=e)
