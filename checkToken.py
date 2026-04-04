@@ -79,13 +79,14 @@ def checktoken_handler(update, context):
     raw_text = update.message.text
     token = raw_text.replace("@AmrosolBot", "").replace("*", "").strip()
 
+    # validasi token → pesan sudah lengkap (valid/invalid + sumber)
     is_valid, message = validate_token(token)
     update.message.reply_text(message)
 
     # hapus pesan token user agar tidak tersimpan
     remove_user_token_message(context, update.message.chat_id, update.message.message_id)
 
-    # catat aktivitas hanya kalau token valid dari bot
+    # catat aktivitas sesuai hasil validasi
     record_check(update.effective_user.id, is_valid)
 
     # hapus prompt awal
