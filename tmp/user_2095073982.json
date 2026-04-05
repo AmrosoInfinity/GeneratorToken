@@ -1,9 +1,12 @@
 {
   "user_requests": {
-    "2095073982_2026-03-23": 1
+    "2095073982_2026-03-23": 1,
+    "2095073982_2026-04-05": 1
   },
   "user_blocked": {},
   "user_timezone": {
     "2095073982": "Asia/Makassar"
-  }
+  },
+  "token_usage": {},
+  "last_token": {}
 }
