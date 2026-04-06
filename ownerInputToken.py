@@ -1,12 +1,36 @@
-import subprocess
-import datetime
-import os
 import json
-import base64
+import os
+import re
+from telegram.ext import CommandHandler
 
 # Simpan config di root/config/
 CONFIG_FILE = os.path.join("config", "njwt_config.json")
-PRIVATE_KEY_FILE = os.path.join("config", "ec-private.pem")  # private key juga di folder config
+
+def sanitize_token(raw: str) -> str:
+    cleaned = raw.strip()
+    return re.sub(r"[^A-Za-z0-9\-\._]", "", cleaned)
+
+def input_token(update, context):
+    owner_id = context.bot_data.get("owner_id", 0)
+    user_id = update.effective_user.id
+
+    if user_id != owner_id:
+        update.message.reply_text("⚠️ Hanya owner bot yang bisa menggunakan perintah ini.")
+        return
+
+    if not context.args:
+        update.message.reply_text("Gunakan format: /inputToken <njwt_string>")
+        return
+
+    raw_token = " ".join(context.args)
+    njwt_string = sanitize_token(raw_token)
+
+    config = {"njwt": njwt_string}
+    os.makedirs("config", exist_ok=True)  # pastikan folder config ada
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f)
+
+    update.message.reply_text("✅ String njwt berhasil disimpan.")
 
 def load_njwt():
     if os.path.exists(CONFIG_FILE):
@@ -15,35 +39,7 @@ def load_njwt():
             return config.get("njwt")
     return None
 
-def base64url_encode(data: bytes) -> str:
-    return base64.urlsafe_b64encode(data).decode().rstrip("=")
-
-def generate_jwt():
-    if not os.path.exists(PRIVATE_KEY_FILE):
-        raise FileNotFoundError("⚠️ Private key file tidak ditemukan di config/. Pastikan ec-private.pem tersedia.")
-
-    njwt_string = load_njwt() or "default_njwt"
-
-    header = {"alg": "ES256", "typ": "JWT"}
-    payload = {
-        "njwt": njwt_string,
-        "iat": int(datetime.datetime.utcnow().timestamp()),
-        "exp": int((datetime.datetime.utcnow() + datetime.timedelta(days=1)).timestamp()),
-        "sub": "8162065b-2753-4e34-8151-b23b06eeb783",
-        "aud": "PASSENGER"
-    }
-
-    header_b64 = base64url_encode(json.dumps(header, separators=(",", ":")).encode())
-    payload_b64 = base64url_encode(json.dumps(payload, separators=(",", ":")).encode())
-    signing_input = f"{header_b64}.{payload_b64}"
-
-    proc = subprocess.run(
-        ["openssl", "dgst", "-sha256", "-binary", "-sign", PRIVATE_KEY_FILE],
-        input=signing_input.encode(),
-        capture_output=True,
-        check=True
-    )
-    signature = proc.stdout
-    signature_b64 = base64url_encode(signature)
-
-    return f"{signing_input}.{signature_b64}"
+def register_input_token(dp, owner_id=None):
+    if owner_id is not None:
+        dp.bot_data["owner_id"] = owner_id
+    dp.add_handler(CommandHandler("inputToken", input_token))
