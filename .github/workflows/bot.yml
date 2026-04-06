@@ -29,7 +29,6 @@ jobs:
         run: |
           mkdir -p config
           echo '{"njwt":"default_njwt"}' > config/njwt_config.json
-          ls -l config/
 
       - name: Run Telegram Bot
         env:
@@ -38,35 +37,31 @@ jobs:
           FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }}
           BOT_OWNER_ID: ${{ secrets.BOT_OWNER_ID }}
         run: |
-          python bot.py &
-          BOT_PID=$!
-          # 21420 detik = 5 jam 57 menit (sesuai cron tiap 6 jam)
-          sleep 21420
-          kill $BOT_PID
+          timeout 21420s python bot.py
 
-      - name: Commit tmp folder to repo
+      - name: Commit tmp folder
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add tmp/
           git commit -m "Update tmp data from workflow run" || echo "No changes to commit"
-          git pull --rebase origin main
           git push
 
-      - name: Commit data folder to repo
+      - name: Commit data folder
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add data/
           git commit -m "Update blocked/suspect users data" || echo "No changes to commit"
-          git pull --rebase origin main
           git push
 
-      - name: Commit config folder to repo
+      - name: Commit config folder
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add config/
           git commit -m "Update config data (njwt/private key)" || echo "No changes to commit"
-          git pull --rebase origin main
           git push
