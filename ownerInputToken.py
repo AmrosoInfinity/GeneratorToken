@@ -7,7 +7,7 @@ def sanitize_token(raw: str) -> str:
     return re.sub(r"[^A-Za-z0-9\-\._]", "", raw.strip())
 
 def input_token(update, context):
-    owner_id = context.bot_data.get("owner_id", 0)
+    owner_id = context.bot_data.get("owner_id")
     user_id = update.effective_user.id
 
     if user_id != owner_id:
