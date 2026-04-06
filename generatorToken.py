@@ -38,7 +38,6 @@ def button_handler(update, context):
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
-    # Load 5 variabel agar tidak Unpacking Error
     user_requests, user_blocked, user_timezone, token_usage, last_token = load_tmp(user_id)
 
     try:
@@ -55,27 +54,32 @@ def button_handler(update, context):
                 set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
                 return
 
-            # --- EKSEKUSI GRAB ---
             if data == "grab":
                 last_token = handle_grab(query, user_id, tz_name, user_requests, user_blocked, user_timezone, token_usage, last_token, update, context)
 
-            # --- EKSEKUSI GOJEK (MODUL DIRECT-TO-USER) ---
             elif data == "gojek":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
-                if tokens:
-                    chosen = get_available_token(tokens, user_id, token_usage)
-                    if chosen:
-                        msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 20, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
+                if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
+                    url_gojek = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek"
+                    tokens = fetch_tokens(url_gojek)
+                    
+                    if tokens:
+                        chosen = random.choice(tokens).strip()
+                        try:
+                            text = string.TOKEN_GOJEK.format(token=f"```{chosen}```")
+                        except:
+                            text = f"🚀 **Gojek Token:**\n\n```{chosen}```"
+                        
+                        query.edit_message_text(text, parse_mode="Markdown")
+                        
+                        # Simpan log penggunaan (Metadata)
                         last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
+                        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
+                        
+                        # Hapus pesan otomatis
+                        context.job_queue.run_once(lambda ctx: ctx.bot.delete_message(chat.id, message_id), 20)
                     else:
-                        query.edit_message_text("⚠️ Semua token sudah dipakai oleh 3 user.", parse_mode="Markdown")
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
+                        query.edit_message_text("❌ Gagal: Token tidak ditemukan di Gist.")
 
-        if state:
             active_button_owner.pop(message_id, None)
 
         elif data == "set_timezone":
