@@ -9,6 +9,7 @@ from checkToken import register_checktoken
 from blockHandler import register_block
 from suspectHandler import register_suspect
 from groupActivity import register_group_activity
+from ownerInputToken import register_input_Token
 
 def main():
     # Setup logging (akan tampil di console GitHub Actions)
@@ -37,7 +38,8 @@ def main():
     register_group_activity(dp, owner_id=8004967513) 
     register_checktoken(dp, owner_id=8004967513) 
     register_block(dp, owner_id=8004967513)
-    register_suspect(dp, owner_id=8004967513) 
+    register_suspect(dp, owner_id=8004967513)
+    register_input_token(dp, owner_id=8004967513) 
     logger.debug("Handlers registered.")
 
     # Jalankan bot
