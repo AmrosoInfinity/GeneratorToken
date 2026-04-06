@@ -1,35 +1,12 @@
-import json
+import subprocess
+import datetime
 import os
-import re
-from telegram.ext import CommandHandler
+import json
+import base64
 
-CONFIG_FILE = "njwt_config.json"
-OWNER_ID = int(os.environ.get("BOT_OWNER_ID", "0"))
-
-def sanitize_token(raw: str) -> str:
-    """Bersihkan token dari karakter yang tidak valid (Base64URL + titik)."""
-    cleaned = raw.strip()
-    return re.sub(r"[^A-Za-z0-9\-\._]", "", cleaned)
-
-def input_token(update, context):
-    user_id = update.effective_user.id
-    if user_id != OWNER_ID:
-        update.message.reply_text("⚠️ Hanya owner bot yang bisa menggunakan perintah ini.")
-        return
-
-    if not context.args:
-        update.message.reply_text("Gunakan format: /inputToken <njwt_string>")
-        return
-
-    raw_token = " ".join(context.args)
-    njwt_string = sanitize_token(raw_token)
-
-    # Simpan ke file config
-    config = {"njwt": njwt_string}
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config, f)
-
-    update.message.reply_text("✅ String njwt berhasil disimpan.")
+# Simpan config di root/config/
+CONFIG_FILE = os.path.join("config", "njwt_config.json")
+PRIVATE_KEY_FILE = os.path.join("config", "ec-private.pem")  # private key juga di folder config
 
 def load_njwt():
     if os.path.exists(CONFIG_FILE):
@@ -38,5 +15,35 @@ def load_njwt():
             return config.get("njwt")
     return None
 
-def register_input_token(dp):
-    dp.add_handler(CommandHandler("inputToken", input_token))
+def base64url_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+def generate_jwt():
+    if not os.path.exists(PRIVATE_KEY_FILE):
+        raise FileNotFoundError("⚠️ Private key file tidak ditemukan di config/. Pastikan ec-private.pem tersedia.")
+
+    njwt_string = load_njwt() or "default_njwt"
+
+    header = {"alg": "ES256", "typ": "JWT"}
+    payload = {
+        "njwt": njwt_string,
+        "iat": int(datetime.datetime.utcnow().timestamp()),
+        "exp": int((datetime.datetime.utcnow() + datetime.timedelta(days=1)).timestamp()),
+        "sub": "8162065b-2753-4e34-8151-b23b06eeb783",
+        "aud": "PASSENGER"
+    }
+
+    header_b64 = base64url_encode(json.dumps(header, separators=(",", ":")).encode())
+    payload_b64 = base64url_encode(json.dumps(payload, separators=(",", ":")).encode())
+    signing_input = f"{header_b64}.{payload_b64}"
+
+    proc = subprocess.run(
+        ["openssl", "dgst", "-sha256", "-binary", "-sign", PRIVATE_KEY_FILE],
+        input=signing_input.encode(),
+        capture_output=True,
+        check=True
+    )
+    signature = proc.stdout
+    signature_b64 = base64url_encode(signature)
+
+    return f"{signing_input}.{signature_b64}"
