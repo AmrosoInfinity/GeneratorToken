@@ -1,4 +1,3 @@
-import random
 import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
@@ -8,6 +7,9 @@ from support import string
 from utils.button_group_utils import send_group_only_message
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
+
+# Import handler Grab
+from utils.grab_handler_utils import handle_grab
 
 # mapping message_id -> {owner: user_id, expired: bool}
 active_button_owner = {}
@@ -21,24 +23,6 @@ def delete_message(context):
         context.bot.delete_message(chat_id=chat_id, message_id=message_id)
     except Exception as e:
         print(f"[DEBUG] Failed to delete message {message_id}: {e}")
-
-# === Validasi token usage ===
-def can_use_token(token, user_id, token_usage):
-    """Return True jika token masih bisa dipakai, False kalau sudah limit."""
-    users = set(token_usage.get(token, []))
-    if len(users) >= 3:
-        return False
-    users.add(user_id)
-    token_usage[token] = list(users)
-    return True
-
-def get_available_token(tokens, user_id, token_usage):
-    """Cari token yang belum penuh 3 user."""
-    random.shuffle(tokens)
-    for token in tokens:
-        if can_use_token(token, user_id, token_usage):
-            return token
-    return None
 
 # === Menu utama token ===
 def token_menu(update, context):
@@ -86,41 +70,23 @@ def button_handler(update, context):
 
         tz_name = user_timezone.get(str(user_id))
 
-        # cek apakah user sudah punya token dalam 12 jam terakhir
-        if last_token:
-            last_time = datetime.datetime.fromisoformat(last_token.get("time"))
-            if datetime.datetime.now() - last_time < datetime.timedelta(hours=12):
-                query.edit_message_text("⚠️ Kamu sudah menerima token dalam 12 jam terakhir.", parse_mode="Markdown")
-                return
-
         # === Grab ===
         if data == "grab":
-            if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
-                tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/5b19fdb53aa1bfcfa4fc3843165b9471/raw/Grab")
-                if tokens:
-                    chosen = get_available_token(tokens, user_id, token_usage)
-                    if chosen:
-                        msg = query.edit_message_text(string.TOKEN_GRAB.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 2, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
-                        last_token = {"service": "Grab", "time": datetime.datetime.now().isoformat()}
-                    else:
-                        query.edit_message_text("⚠️ Semua token sudah dipakai oleh 3 user.", parse_mode="Markdown")
-                else:
-                    query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Grab"), parse_mode="Markdown")
-            save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
+            last_token = handle_grab(
+                query, user_id, tz_name,
+                user_requests, user_blocked, user_timezone,
+                token_usage, last_token, update, context
+            )
 
         # === Gojek ===
         elif data == "gojek":
             if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
-                    chosen = get_available_token(tokens, user_id, token_usage)
-                    if chosen:
-                        msg = query.edit_message_text(string.TOKEN_GOJEK.format(token=chosen), parse_mode="Markdown")
-                        context.job_queue.run_once(delete_message, 2, context={"chat_id": msg.chat_id, "message_id": msg.message_id})
-                        last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
-                    else:
-                        query.edit_message_text("⚠️ Semua token sudah dipakai oleh 3 user.", parse_mode="Markdown")
+                    token = tokens[0]
+                    query.edit_message_text(string.TOKEN_GOJEK.format(token=token), parse_mode="Markdown")
+                    context.job_queue.run_once(delete_message, 2, context={"chat_id": query.message.chat_id, "message_id": query.message.message_id})
+                    last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat(), "token": token}
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
             save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
