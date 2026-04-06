@@ -14,7 +14,7 @@ from groupActivity import register_group_activity
 from ownerInputToken import register_input_token
 
 def main():
-    # Setup logging (tampil di console GitHub Actions)
+    # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         level=logging.DEBUG
@@ -27,10 +27,11 @@ def main():
         raise ValueError("⚠️ TELEGRAM_BOT_TOKEN belum diset di environment.")
     logger.debug("Token terbaca, panjang: %d", len(token))
 
-    # Ambil owner ID dari environment (lebih fleksibel daripada hardcode)
-    owner_id = int(os.getenv("BOT_OWNER_ID", "0"))
-    if owner_id == 0:
-        logger.warning("⚠️ BOT_OWNER_ID belum diset, default 0. /inputToken tidak akan berfungsi.")
+    # Ambil owner ID dari environment (wajib ada, tidak ada default)
+    raw_owner = os.getenv("BOT_OWNER_ID")
+    if not raw_owner:
+        raise ValueError("⚠️ BOT_OWNER_ID belum diset di environment.")
+    owner_id = int(raw_owner)
 
     # Inisialisasi updater dan dispatcher
     updater = Updater(token, use_context=True)
@@ -38,15 +39,15 @@ def main():
 
     # Register semua handler
     logger.debug("Registering handlers...")
-    register_token_handlers(dp)                  # tombol /token (Grab/Gojek + timezone)
-    register_chat_handlers(dp)                   # modul chatOpenAi
-    register_appops_handlers(dp)                 # modul appopsPermission
-    register_command_handlers(dp)                # modul commandBot
+    register_token_handlers(dp)
+    register_chat_handlers(dp)
+    register_appops_handlers(dp)
+    register_command_handlers(dp)
     register_group_activity(dp, owner_id=owner_id)
     register_checktoken(dp, owner_id=owner_id)
     register_block(dp, owner_id=owner_id)
     register_suspect(dp, owner_id=owner_id)
-    register_input_token(dp, owner_id=owner_id)  # /inputToken untuk simpan njwt
+    register_input_token(dp, owner_id=owner_id)
     logger.debug("Handlers registered.")
 
     # Jalankan bot
