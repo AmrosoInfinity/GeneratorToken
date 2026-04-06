@@ -1,50 +1,70 @@
 import json
 import os
-import re
 import logging
+import base64
+import datetime
 from telegram.ext import CommandHandler
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE = os.path.join("config", "njwt_config.json")
 
-def sanitize_token(raw: str) -> str:
-    """Membersihkan token dari spasi atau karakter ilegal."""
-    return raw.strip()
+def decode_jwt_payload(token: str):
+    """Decode payload JWT tanpa verifikasi signature."""
+    try:
+        parts = token.split('.')
+        if len(parts) != 3: return None
+        
+        payload_b64 = parts[1]
+        # Fix padding base64
+        payload_b64 += '=' * (4 - len(payload_b64) % 4) if len(payload_b64) % 4 else ''
+        
+        payload_json = base64.urlsafe_b64decode(payload_b64).decode('utf-8')
+        return json.loads(payload_json)
+    except Exception as e:
+        logger.error(f"Gagal decode payload: {e}")
+        return None
 
 def input_token(update, context):
     owner_id = context.bot_data.get("owner_id")
-    user_id = update.effective_user.id
+    if int(update.effective_user.id) != int(owner_id): return
 
-    # Validasi Owner (Integer comparison)
-    if owner_id is None or int(user_id) != int(owner_id):
-        update.message.reply_text("⚠️ Akses ditolak. Hanya owner yang bisa input token.")
-        return
-
-    # Validasi Argumen (Harus ada token setelah command)
     if not context.args:
-        update.message.reply_text("❌ Format salah! Gunakan: `/inputToken ey....` ", parse_mode='Markdown')
+        update.message.reply_text("❌ Mana tokennya? Format: `/inputToken ey...`", parse_mode='Markdown')
         return
 
-    # Menggabungkan argumen jika token terpisah spasi, lalu bersihkan
-    njwt_string = sanitize_token(" ".join(context.args))
-    
+    njwt_string = "".join(context.args).strip()
+    payload = decode_jwt_payload(njwt_string)
+
+    # Validasi field wajib
+    if not payload or not all(k in payload for k in ('iat', 'exp', 'sub')):
+        update.message.reply_text("❌ Token tidak valid! Field `iat`, `exp`, atau `sub` tidak ditemukan.", parse_mode='Markdown')
+        return
+
     try:
         os.makedirs("config", exist_ok=True)
+        data_to_save = {
+            "njwt": njwt_string,
+            "iat": payload['iat'],
+            "exp": payload['exp'],
+            "sub": payload['sub'], # <--- Sinkronisasi SUB
+            "updated_at": int(datetime.datetime.utcnow().timestamp())
+        }
         
-        # LOGIKA REPLACE: Mode 'w' akan menghapus isi lama dan menulis yang baru
         with open(CONFIG_FILE, "w") as f:
-            json.dump({"njwt": njwt_string}, f, indent=4)
+            json.dump(data_to_save, f, indent=4)
         
-        logger.info(f"Token njwt berhasil diperbarui oleh {user_id}")
-        update.message.reply_text("✅ **Token Berhasil Digantikan!**\n\nData lama telah dihapus dan diganti dengan token baru. Gunakan `/token` untuk generate JWT.", parse_mode='Markdown')
-    
+        expired_dt = datetime.datetime.fromtimestamp(payload['exp']).strftime('%Y-%m-%d %H:%M:%S')
+        update.message.reply_text(
+            f"✅ **Double Layer Synced!**\n\n"
+            f"👤 **Sub:** `{payload['sub']}`\n"
+            f"📅 **Exp:** `{expired_dt}`\n"
+            f"🛠 **Status:** Ready to Generate.",
+            parse_mode='Markdown'
+        )
     except Exception as e:
-        logger.error(f"Gagal menulis file config: {e}")
-        update.message.reply_text(f"❌ Terjadi kesalahan sistem saat menyimpan token: {e}")
+        logger.error(f"Gagal simpan config: {e}")
+        update.message.reply_text(f"❌ Gagal tulis file: {e}")
 
 def register_input_token(dp, owner_id: int):
-    """Mendaftarkan handler ke dispatcher."""
     dp.bot_data["owner_id"] = owner_id
-    # Daftarkan variasi huruf besar/kecil agar lebih fleksibel
     dp.add_handler(CommandHandler("inputToken", input_token))
-    dp.add_handler(CommandHandler("inputtoken", input_token))
