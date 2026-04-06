@@ -27,12 +27,14 @@ info= *📌 Cara Meminta Token*
 *📢 Mohon Perhatian*
     Anonymously Admin grup tidak dapat dikenali identitas kepemilikan tombolnya saat AmrosolBot *bukan Admin* grup karena telegram menggunakan virtual user. Pastikan bot adalah Admin grup agar bisa membaca ID user Anonymously yang konsisten sebagai Admin.
 
-    AmrosolBot mengunci permintaan identik, setiap 1 token hanya diberikan untuk 3 user, Bot tidak akan mengirim token yang sudah memenuhi slot, max kuota 3 kali request dapat di gunakan hanya ketika saat bot generate token ternyata sudah penuh slot untuk token identik tersebut. 
-
-    AmrosolBot memperketat fungsi permintaan token untuk meminimalkan percepatan waktu *revoked token*. Sekarang semua bergantung pada kalian,  
+    Generator Refresh Token hanya untuk grab, selalu di cek setiap mulai mengirim perintah '/token' dan milih grab. AmrosolBot mengecek slot token user jika belum memiliki akan diberikan token aktif. Limit kuota 3x request berlaku, jika mengirim perintah '/token' lagi Amrosol akan mengecek status token lama dan di kembalikan jika masih aktif. 
 
 ♻️ *UPDATE*
-⏳ 2026-1-4 04:07WIB
-📜 Fix feature
-- Adjustment, isHaventTokens is repeated until it matches.
-🙏 Gunakan bot ini dengan bijak agar semua member bisa terbantu.
+⏳ 2026-06-04 19:31WIB
+📜 Perbaikan 
+   - Menghapus generator list token
+   - Menghapus permintaan identik
+   - Menambah generator refresh token
+   - Menambah status chacked
+   - Double layer token grab
+   
