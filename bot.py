@@ -15,11 +15,11 @@ from groupActivity import register_group_activity
 from ownerInputToken import register_input_token
 
 def main():
-    # 1. Konfigurasi Logging yang lebih detail
+    # 1. Konfigurasi Logging
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         level=logging.INFO,
-        handlers=[logging.StreamHandler(sys.stdout)] # Memastikan log tampil di GitHub Actions
+        handlers=[logging.StreamHandler(sys.stdout)]
     )
     logger = logging.getLogger(__name__)
 
@@ -36,36 +36,36 @@ def main():
     updater = Updater(token, use_context=True)
     dp = updater.dispatcher
 
-    logger.info("🛠 Memulai registrasi handler dengan urutan prioritas...")
+    logger.info("🛠 Memulai registrasi handler...")
 
-    # --- KELOMPOK 1: PERINTAH SPESIFIK (PRIORITAS UTAMA) ---
-    # Register Token & Input Token harus di paling atas agar tidak 'dimakan' AI
-    register_input_token(dp, owner_id)
-    register_token_handlers(dp) # Ini yang menangani /token
-    
-    # --- KELOMPOK 2: KEAMANAN & ADMIN ---
+    # --- LEVEL 0: SISTEM & KEAMANAN ---
     register_block(dp, owner_id)
     register_suspect(dp, owner_id)
-    register_checktoken(dp, owner_id)
 
-    # --- KELOMPOK 3: FITUR FUNGSIONAL LAIN ---
+    # --- LEVEL 1: COMMANDS (Harus di Atas MessageHandler) ---
+    # Register /token, /checktoken, dan input owner
+    register_input_token(dp, owner_id)
+    register_token_handlers(dp)   # Handler /token
+    register_checktoken(dp, owner_id) # Handler /checktoken
+
+    # --- LEVEL 2: TOOLS & UTILITIES ---
     register_appops_handlers(dp)
     register_command_handlers(dp)
 
-    # --- KELOMPOK 4: HANDLER UMUM (CATCH-ALL) ---
-    # register_chat_handlers dan group_activity biasanya menangani MessageHandler(Filters.text)
-    # Ini HARUS ditaruh paling bawah agar tidak memblokir CommandHandler di atas
+    # --- LEVEL 3: CHAT & ACTIVITY (CATCH-ALL) ---
+    # register_group_activity dan register_chat_handlers diletakkan paling bawah.
+    # register_chat_handlers (AI) sering menggunakan Filters.text yang luas,
+    # jadi harus setelah checkToken agar input token tidak dimakan AI.
     register_group_activity(dp, owner_id)
     register_chat_handlers(dp) 
 
-    logger.info("✅ Registrasi selesai. Mencoba menghubungkan ke Telegram...")
+    logger.info("✅ Registrasi selesai. Menghubungkan ke Telegram...")
 
     # 4. Jalankan Bot
-    # drop_pending_updates=True sangat penting di GitHub Actions agar bot 
-    # tidak 'hang' karena memproses ribuan chat yang masuk saat bot mati.
+    # drop_pending_updates=True mencegah bot hang saat baru dinyalakan
     updater.start_polling(drop_pending_updates=True)
     
-    logger.info("🤖 Bot AKTIF. Gunakan /token untuk mencoba.")
+    logger.info("🤖 Bot AKTIF.")
     
     updater.idle()
 
@@ -73,5 +73,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        # Menangkap error fatal agar terlihat di log GitHub
         logging.error(f"❌ KESALAHAN SISTEM: {e}", exc_info=True)
