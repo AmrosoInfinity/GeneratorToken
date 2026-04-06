@@ -69,7 +69,7 @@ def button_handler(update, context):
                     if tokens:
                         token = random.choice(tokens).strip()
                         # Fix Parse Entities Error: Bungkus token dengan backticks secara eksplisit
-                        pesan = f"🚀 **Gojek Token:**\n\n```{token}```"
+                        pesan = f"**####Token Gojek####**\n\n```{token}```"
                         query.edit_message_text(pesan, parse_mode="Markdown")
                         
                         last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
