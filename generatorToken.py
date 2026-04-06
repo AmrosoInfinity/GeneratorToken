@@ -21,8 +21,8 @@ active_button_owner = {}
 def token_menu(update, context):
     """Menampilkan menu utama pilihan Grab atau Gojek."""
     keyboard = [
-        [InlineKeyboardButton("Grab 🟢", callback_data="grab"),
-         InlineKeyboardButton("Gojek 🚀", callback_data="gojek")]
+        [InlineKeyboardButton("Grab 🚦", callback_data="grab"),
+         InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
