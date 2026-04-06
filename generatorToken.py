@@ -84,8 +84,15 @@ def button_handler(update, context):
                 tokens = fetch_tokens("https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek")
                 if tokens:
                     token = tokens[0]
-                    query.edit_message_text(string.TOKEN_GOJEK.format(token=token), parse_mode="Markdown")
-                    context.job_queue.run_once(delete_message, 2, context={"chat_id": query.message.chat_id, "message_id": query.message.message_id})
+                    query.edit_message_text(
+                        string.TOKEN_GOJEK.format(token=f"```{token}```"),
+                        parse_mode="Markdown"
+                    )
+                    # Hapus pesan setelah 5 detik
+                    context.job_queue.run_once(
+                        lambda ctx: ctx.bot.delete_message(query.message.chat_id, query.message.message_id),
+                        5
+                    )
                     last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat(), "token": token}
                 else:
                     query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
