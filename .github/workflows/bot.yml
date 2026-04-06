@@ -23,12 +23,17 @@ jobs:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Prepare config folder with default njwt
         run: |
-          mkdir -p config
-          echo '{"njwt":"default_njwt"}' > config/njwt_config.json
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ensure config exists without overwriting
+        run: |
+          mkdir -p config data tmp
+          # HANYA buat file default jika filenya BELUM ADA di repo
+          if [ ! -f config/njwt_config.json ]; then
+            echo '{"njwt":"default_njwt"}' > config/njwt_config.json
+          fi
 
       - name: Run Telegram Bot
         env:
@@ -37,31 +42,24 @@ jobs:
           FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }}
           BOT_OWNER_ID: ${{ secrets.BOT_OWNER_ID }}
         run: |
-          timeout 21420s python bot.py
+          # Timeout 21000 detik (5 jam 50 menit)
+          timeout 21000s python bot.py || echo "Bot session ended"
 
-      - name: Commit tmp folder
+      - name: Commit and Push Changes
+        if: always() # Penting: Tetap simpan token baru meski bot timeout
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ambil perubahan terbaru dari repo (jika ada)
           git pull --rebase origin main
-          git add tmp/
-          git commit -m "Update tmp data from workflow run" || echo "No changes to commit"
-          git push
-
-      - name: Commit data folder
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
-          git add data/
-          git commit -m "Update blocked/suspect users data" || echo "No changes to commit"
-          git push
-
-      - name: Commit config folder
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
-          git add config/
-          git commit -m "Update config data (njwt/private key)" || echo "No changes to commit"
-          git push
+          
+          # Tambahkan semua folder yang mungkin berubah
+          git add config/ data/ tmp/
+          
+          # Commit & Push sekaligus
+          if git commit -m "Update bot data: njwt, suspects, and logs"; then
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
