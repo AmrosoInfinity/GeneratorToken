@@ -1,7 +1,7 @@
 import time
 import datetime
 from double_jwt.generator_jwt import generate_jwt
-from utils.token_validate_utils import validate_token, check_limit, save_tmp
+from utils.token_validate_utils import check_grab_token_status, check_limit, save_tmp
 
 def handle_grab(query, user_id, tz_name, user_requests, user_blocked, user_timezone,
                 token_usage, last_token, update, context):
