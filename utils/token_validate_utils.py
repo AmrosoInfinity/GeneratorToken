@@ -193,3 +193,23 @@ def validate_token(token: str) -> tuple[bool, str]:
             return False, f"{CHECKTOKEN_INVALID_MSG.format(length=len(token), status=status_code)}\n{source_info}"
     except Exception as e:
         return False, CHECKTOKEN_ERROR_MSG.format(error=e)
+
+
+def check_grab_token_status(token: str | None) -> tuple[bool, str]:
+    """
+    Fungsi khusus untuk Grab handler.
+    Memanggil API profile Grab untuk cek status token.
+    """
+    if not token or not isinstance(token, str):
+        return False, "⚠️ Token kosong atau bukan string."
+
+    try:
+        resp = requests.get(PROFILE_URL, headers=_build_headers(token), timeout=10)
+        status_code = resp.status_code
+
+        if status_code == 200:
+            return True, f"✅ Token aktif (status {status_code})"
+        else:
+            return False, f"⚠️ Token tidak valid (status {status_code})"
+    except Exception as e:
+        return False, f"⚠️ Error saat cek token: {e}"
