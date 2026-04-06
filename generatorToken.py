@@ -16,10 +16,13 @@ logger = logging.getLogger(__name__)
 active_button_owner = {}
 
 def token_menu(update, context):
-    keyboard = [[InlineKeyboardButton("Grab 🚦", callback_data="grab"),
-                 InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]]
+    keyboard = [
+        [InlineKeyboardButton("Grab 🚦", callback_data="grab"),
+         InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
+
     active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
@@ -64,18 +67,16 @@ def button_handler(update, context):
                     url_gojek = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek"
                     tokens = fetch_tokens(url_gojek)
                     if tokens:
-                        # Pilih random agar tidak token itu-itu saja
                         token = random.choice(tokens).strip()
-                        query.edit_message_text(string.TOKEN_GOJEK.format(token=f"```{token}```"), parse_mode="Markdown")
+                        # Fix Parse Entities Error: Bungkus token dengan backticks secara eksplisit
+                        pesan = f"🚀 **Gojek Token:**\n\n```{token}```"
+                        query.edit_message_text(pesan, parse_mode="Markdown")
                         
-                        # Set metadata untuk log save_tmp
                         last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
-                        
                         context.job_queue.run_once(lambda ctx: ctx.bot.delete_message(chat.id, message_id), 15)
                     else:
-                        query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
+                        query.edit_message_text("❌ Token Gojek tidak ditemukan di Gist.", parse_mode="Markdown")
                 
-                # Simpan log ke action/JSON
                 save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
 
             active_button_owner.pop(message_id, None)
@@ -84,19 +85,22 @@ def button_handler(update, context):
             keyboard = [[InlineKeyboardButton("WIB", callback_data="tz_Asia/Jakarta")],
                         [InlineKeyboardButton("WITA", callback_data="tz_Asia/Makassar")],
                         [InlineKeyboardButton("WIT", callback_data="tz_Asia/Jayapura")]]
-            msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=InlineKeyboardMarkup(keyboard))
-            active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
+            query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=InlineKeyboardMarkup(keyboard))
 
         elif data.startswith("tz_"):
             tz_selected = data.replace("tz_", "")
             user_timezone[str(user_id)] = tz_selected
             save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
-            query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_selected), parse_mode="Markdown")
+            query.edit_message_text(f"✅ Timezone diatur ke: `{tz_selected}`", parse_mode="Markdown")
             active_button_owner.pop(message_id, None)
 
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
-        query.edit_message_text(f"⚠️ Error Internal: `{str(e)}`", parse_mode="Markdown")
+        # Fallback jika Markdown masih error: kirim tanpa parse_mode
+        try:
+            query.edit_message_text(f"⚠️ Error Internal: {str(e)}")
+        except:
+            pass
 
 def register_token_handlers(dp):
     dp.add_handler(CommandHandler("token", token_menu))
