@@ -25,7 +25,6 @@ def input_token(update, context):
 
     update.message.reply_text("✅ String njwt berhasil disimpan. Sekarang gunakan /token untuk generate JWT.")
 
-def register_input_token(dp, owner_id=None):
-    if owner_id is not None:
-        dp.bot_data["owner_id"] = owner_id
+def register_input_token(dp, owner_id: int):
+    dp.bot_data["owner_id"] = owner_id
     dp.add_handler(CommandHandler("inputToken", input_token))
