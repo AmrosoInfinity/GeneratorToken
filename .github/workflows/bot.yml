@@ -25,9 +25,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Prepare config folder
+      - name: Prepare config folder with default njwt
         run: |
           mkdir -p config
+          echo '{"njwt":"default_njwt"}' > config/njwt_config.json
           ls -l config/
 
       - name: Run Telegram Bot
