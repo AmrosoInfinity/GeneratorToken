@@ -36,33 +36,29 @@ def main():
     updater = Updater(token, use_context=True)
     dp = updater.dispatcher
 
-    logger.info("🛠 Memulai registrasi handler...")
+    logger.info("🛠 Memulai registrasi handler FLAT...")
 
-    # --- LEVEL 0: SISTEM & KEAMANAN ---
+    # --- REGISTRASI FULL FLAT (WAJIB URUTAN INI) ---
+
+    # 1. PERINTAH UTAMA & INPUT (BIAR /TOKEN GAK MATI)
+    register_input_token(dp, owner_id)
+    register_token_handlers(dp)       # Handler /token (Grab/Gojek)
+    register_checktoken(dp, owner_id)  # Handler /checktoken (Validasi)
+    register_command_handlers(dp)      # Handler /help, dll
+    register_appops_handlers(dp)       # Handler /appops
+
+    # 2. SISTEM KEAMANAN
     register_block(dp, owner_id)
     register_suspect(dp, owner_id)
 
-    # --- LEVEL 1: COMMANDS (Harus di Atas MessageHandler) ---
-    # Register /token, /checktoken, dan input owner
-    register_input_token(dp, owner_id)
-    register_token_handlers(dp)   # Handler /token
-    register_checktoken(dp, owner_id) # Handler /checktoken
-
-    # --- LEVEL 2: TOOLS & UTILITIES ---
-    register_appops_handlers(dp)
-    register_command_handlers(dp)
-
-    # --- LEVEL 3: CHAT & ACTIVITY (CATCH-ALL) ---
-    # register_group_activity dan register_chat_handlers diletakkan paling bawah.
-    # register_chat_handlers (AI) sering menggunakan Filters.text yang luas,
-    # jadi harus setelah checkToken agar input token tidak dimakan AI.
+    # 3. FITUR UMUM / CATCH-ALL (WAJIB PALING BAWAH)
+    # Alasan: Biar teks token gak dicolong AI sebelum nyampe ke checktoken
     register_group_activity(dp, owner_id)
-    register_chat_handlers(dp) 
+    register_chat_handlers(dp)         # AI / OpenAI Chat
 
     logger.info("✅ Registrasi selesai. Menghubungkan ke Telegram...")
 
     # 4. Jalankan Bot
-    # drop_pending_updates=True mencegah bot hang saat baru dinyalakan
     updater.start_polling(drop_pending_updates=True)
     
     logger.info("🤖 Bot AKTIF.")
