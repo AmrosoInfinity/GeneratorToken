@@ -1,6 +1,6 @@
 import time
-from generator_jwt import generate_jwt
-from token_validate_utils import validate_token  # gunakan fungsi validasi yang Anda punya
+from double_jwt. generator_jwt import generate_jwt
+from utils.token_validate_utils import validate_token  # gunakan fungsi validasi yang Anda punya
 
 def handle_grab(query, user_id, tz_name, user_requests, user_blocked, user_timezone, token_usage, last_token, update, context):
     if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
