@@ -1,13 +1,16 @@
-import json, os, re
+import json
+import os
+import re
 from telegram.ext import CommandHandler
 
 CONFIG_FILE = os.path.join("config", "njwt_config.json")
 
 def sanitize_token(raw: str) -> str:
+    """Bersihkan string token dari karakter ilegal."""
     return re.sub(r"[^A-Za-z0-9\-\._]", "", raw.strip())
 
 def input_token(update, context):
-    owner_id = context.bot_data.get("owner_id")
+    owner_id = context.bot_data["owner_id"]  # selalu ada, wajib diisi dari bot.py
     user_id = update.effective_user.id
 
     if user_id != owner_id:
@@ -26,5 +29,6 @@ def input_token(update, context):
     update.message.reply_text("✅ String njwt berhasil disimpan. Sekarang gunakan /token untuk generate JWT.")
 
 def register_input_token(dp, owner_id: int):
+    """Register handler /inputToken dan simpan owner_id ke bot_data."""
     dp.bot_data["owner_id"] = owner_id
     dp.add_handler(CommandHandler("inputToken", input_token))
