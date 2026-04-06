@@ -9,7 +9,7 @@ from checkToken import register_checktoken
 from blockHandler import register_block
 from suspectHandler import register_suspect
 from groupActivity import register_group_activity
-from ownerInputToken import register_input_Token
+from ownerInputToken import register_input_token
 
 def main():
     # Setup logging (akan tampil di console GitHub Actions)
