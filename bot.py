@@ -39,15 +39,15 @@ def main():
 
     # Register semua handler
     logger.debug("Registering handlers...")
-    register_token_handlers(dp)
-    register_chat_handlers(dp)
-    register_appops_handlers(dp)
-    register_command_handlers(dp)
     register_group_activity(dp, owner_id=owner_id)
     register_checktoken(dp, owner_id=owner_id)
     register_block(dp, owner_id=owner_id)
     register_suspect(dp, owner_id=owner_id)
     register_input_token(dp, owner_id=owner_id)
+    register_token_handlers(dp)
+    register_chat_handlers(dp)
+    register_appops_handlers(dp)
+    register_command_handlers(dp)
     logger.debug("Handlers registered.")
 
     # Jalankan bot
