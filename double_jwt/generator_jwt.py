@@ -3,13 +3,18 @@ import datetime
 import os
 import json
 import base64
+import logging
+
+# Setup logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # Lokasi file config dan key
 CONFIG_FILE = os.path.join("config", "njwt_config.json")
 PRIVATE_KEY_FILE = os.path.join("config", "ec256-private.pem")
-PUBLIC_KEY_FILE = os.path.join("config", "ec256-public.pem")  # optional, untuk verifikasi eksternal
+PUBLIC_KEY_FILE = os.path.join("config", "ec256-public.pem")  # optional
 
-def load_njwt():
+def load_njwt() -> str | None:
     """Ambil string njwt dari file config."""
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as f:
@@ -21,8 +26,11 @@ def base64url_encode(data: bytes) -> str:
     """Encode ke Base64URL tanpa padding '='."""
     return base64.urlsafe_b64encode(data).decode().rstrip("=")
 
-def generate_jwt():
-    """Generate JWT dengan ES256 signature menggunakan private key."""
+def generate_jwt() -> str:
+    """
+    Generate JWT dengan ES256 signature menggunakan private key.
+    Tambahkan log agar bisa dipastikan token berhasil dibuat.
+    """
     if not os.path.exists(PRIVATE_KEY_FILE):
         raise FileNotFoundError("⚠️ Private key file tidak ditemukan di config/. Pastikan ec256-private.pem tersedia.")
 
@@ -54,4 +62,10 @@ def generate_jwt():
     signature_b64 = base64url_encode(signature)
 
     # Gabungkan jadi JWT
-    return f"{signing_input}.{signature_b64}"
+    jwt_token = f"{signing_input}.{signature_b64}"
+
+    # Log hasil pembuatan token
+    logger.info(f"[JWT Generator] Token berhasil dibuat pada {datetime.datetime.utcnow().isoformat()}")
+    logger.debug(f"[JWT Generator] Token (awal 80 char): {jwt_token[:80]}...")
+
+    return jwt_token
