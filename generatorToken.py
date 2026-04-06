@@ -1,7 +1,6 @@
 import datetime
 import logging
 import random
-import time
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler
 
@@ -17,10 +16,8 @@ logger = logging.getLogger(__name__)
 active_button_owner = {}
 
 def token_menu(update, context):
-    keyboard = [
-        [InlineKeyboardButton("Grab 🚦", callback_data="grab"),
-         InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]
-    ]
+    keyboard = [[InlineKeyboardButton("Grab 🚦", callback_data="grab"),
+                 InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
     active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
@@ -38,7 +35,11 @@ def button_handler(update, context):
     if not is_button_owner(context, chat, user_id, state, query):
         return
 
-    user_requests, user_blocked, user_timezone, token_usage, last_token = load_tmp(user_id)
+    tmp_data = load_tmp(user_id)
+    if not tmp_data or len(tmp_data) < 5:
+        user_requests, user_blocked, user_timezone, token_usage, last_token = {}, {}, {}, {}, {}
+    else:
+        user_requests, user_blocked, user_timezone, token_usage, last_token = tmp_data
 
     try:
         if data in ["grab", "gojek"]:
@@ -46,13 +47,14 @@ def button_handler(update, context):
                 send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
                 return
 
-            tz_name = user_timezone.get(str(user_id))
-            if not tz_name:
+            if str(user_id) not in user_timezone:
                 keyboard = [[InlineKeyboardButton("Set Timezone 🌍", callback_data="set_timezone")]]
                 msg = query.edit_message_text(string.NEED_TIMEZONE_TEXT, reply_markup=InlineKeyboardMarkup(keyboard))
                 active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
                 set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
                 return
+
+            tz_name = user_timezone.get(str(user_id))
 
             if data == "grab":
                 last_token = handle_grab(query, user_id, tz_name, user_requests, user_blocked, user_timezone, token_usage, last_token, update, context)
@@ -61,24 +63,20 @@ def button_handler(update, context):
                 if check_limit(update, context, tz_name, user_id, user_requests, user_blocked, user_timezone):
                     url_gojek = "https://gist.githubusercontent.com/AmrosoInfinity/aebd0ba65e12a20b062c291c68714d8a/raw/Gojek"
                     tokens = fetch_tokens(url_gojek)
-                    
                     if tokens:
-                        chosen = random.choice(tokens).strip()
-                        try:
-                            text = string.TOKEN_GOJEK.format(token=f"```{chosen}```")
-                        except:
-                            text = f"🚀 **Gojek Token:**\n\n```{chosen}```"
+                        # Pilih random agar tidak token itu-itu saja
+                        token = random.choice(tokens).strip()
+                        query.edit_message_text(string.TOKEN_GOJEK.format(token=f"```{token}```"), parse_mode="Markdown")
                         
-                        query.edit_message_text(text, parse_mode="Markdown")
-                        
-                        # Simpan log penggunaan (Metadata)
+                        # Set metadata untuk log save_tmp
                         last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
-                        save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
                         
-                        # Hapus pesan otomatis
-                        context.job_queue.run_once(lambda ctx: ctx.bot.delete_message(chat.id, message_id), 20)
+                        context.job_queue.run_once(lambda ctx: ctx.bot.delete_message(chat.id, message_id), 15)
                     else:
-                        query.edit_message_text("❌ Gagal: Token tidak ditemukan di Gist.")
+                        query.edit_message_text(string.TOKEN_NOT_FOUND.format(service="Gojek"), parse_mode="Markdown")
+                
+                # Simpan log ke action/JSON
+                save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
 
             active_button_owner.pop(message_id, None)
 
@@ -86,18 +84,19 @@ def button_handler(update, context):
             keyboard = [[InlineKeyboardButton("WIB", callback_data="tz_Asia/Jakarta")],
                         [InlineKeyboardButton("WITA", callback_data="tz_Asia/Makassar")],
                         [InlineKeyboardButton("WIT", callback_data="tz_Asia/Jayapura")]]
-            query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=InlineKeyboardMarkup(keyboard))
+            msg = query.edit_message_text(string.CHOOSE_TIMEZONE_TEXT, reply_markup=InlineKeyboardMarkup(keyboard))
+            active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
 
         elif data.startswith("tz_"):
             tz_selected = data.replace("tz_", "")
             user_timezone[str(user_id)] = tz_selected
             save_tmp(user_id, user_requests, user_blocked, user_timezone, token_usage, last_token)
-            query.edit_message_text(f"✅ Timezone diatur ke: `{tz_selected}`", parse_mode="Markdown")
+            query.edit_message_text(string.TIMEZONE_SET_SUCCESS.format(tz=tz_selected), parse_mode="Markdown")
             active_button_owner.pop(message_id, None)
 
     except Exception as e:
-        logger.error(f"Error di button_handler: {e}", exc_info=True)
-        query.edit_message_text(f"⚠️ **Error Internal:** `{str(e)}`", parse_mode="Markdown")
+        logger.error(f"Error: {e}", exc_info=True)
+        query.edit_message_text(f"⚠️ Error Internal: `{str(e)}`", parse_mode="Markdown")
 
 def register_token_handlers(dp):
     dp.add_handler(CommandHandler("token", token_menu))
