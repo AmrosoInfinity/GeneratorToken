@@ -1,0 +1,63 @@
+name: Amrosol Token Generator
+on:
+  repository_dispatch:
+    types: [generate_token_page]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate HTML File
+        run: |
+          import os
+          import hashlib
+          import time
+
+          # Ambil data dari payload Bot
+          service = "${{ github.event.client_payload.service }}"
+          user_id = "${{ github.event.client_payload.user_id }}"
+          token_raw = "${{ github.event.client_payload.token_data }}"
+          
+          # Buat Hash unik untuk nama file
+          hash_name = hashlib.md5(f"{user_id}{time.time()}".encode()).hexdigest()[:10]
+          
+          # Tentukan path: service/user_id/
+          folder_path = f"{service}/{user_id}"
+          os.makedirs(folder_path, exist_ok=True)
+          
+          file_name = f"{hash_name}.html"
+          full_path = f"{folder_path}/{file_name}"
+          
+          # Baca Template
+          with open("templates/token_template.html", "r") as f:
+              html_content = f.read()
+          
+          # Inject Data
+          html_content = html_content.replace("{{SERVICE}}", service.upper())
+          html_content = html_content.replace("{{TOKEN_DATA}}", token_raw)
+          
+          # Tulis File Baru
+          with open(full_path, "w") as f:
+              f.write(html_content)
+              
+          print(f"FILE_PATH={full_path}")
+
+        shell: python
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "GigaByte-Bot"
+          git config --global user.email "bot@amrosol.online"
+          git add .
+          git commit -m "⚡ New Token Generated: ${{ github.event.client_payload.service }} for ${{ github.event.client_payload.user_id }}"
+          git push
