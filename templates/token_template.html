@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Giga Byte - Token Viewer</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>{{SERVICE}} TOKEN</h2>
+        <div class="token-box" id="tokenText">{{TOKEN_DATA}}</div>
+        <button class="btn-copy" onclick="copyToken()">SALIN TOKEN</button>
+        <div class="footer">
+            Token ini bersifat rahasia.<br>
+            Akan otomatis dihapus dari sistem dalam 1 jam.
+        </div>
+    </div>
+
+    <script>
+        function copyToken() {
+            const token = document.getElementById('tokenText').innerText;
+            const btn = document.querySelector('.btn-copy');
+            
+            navigator.clipboard.writeText(token).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = 'BERHASIL DISALIN!';
+                btn.style.background = '#ffffff';
+                
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = '#00ff88';
+                }, 2000);
+            }).catch(err => {
+                alert('Gagal menyalin: ' + err);
+            });
+        }
+    </script>
+</body>
+</html>
