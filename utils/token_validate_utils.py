@@ -152,7 +152,7 @@ def _is_token_format_valid(token: str) -> tuple[bool, str | None]:
     token = token.strip()
     if not token.startswith("ey"):
         return False, CHECKTOKEN_INVALID_PREFIX_MSG
-    if len(token) < 1500:
+    if len(token) < 1200:
         return False, CHECKTOKEN_INVALID_LENGTH_MSG
     return True, None
 
