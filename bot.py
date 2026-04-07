@@ -42,7 +42,7 @@ def main():
 
     # 1. PERINTAH UTAMA & INPUT (BIAR /TOKEN GAK MATI)
     register_input_token(dp, owner_id)
-    register_token_handlers(dp)       # Handler /token (Grab/Gojek)
+    register_token_handlers(dp, owner_id)       # Handler /token (Grab/Gojek)
     register_checktoken(dp, owner_id)  # Handler /checktoken (Validasi)
     register_command_handlers(dp)      # Handler /help, dll
     register_appops_handlers(dp)       # Handler /appops
