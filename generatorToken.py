@@ -6,7 +6,7 @@ from telegram.ext import CommandHandler, CallbackQueryHandler
 
 from utils.token_validate_utils import check_limit, fetch_tokens, save_tmp, load_tmp
 from support import string
-from utils.button_group_utils import send_group_only_message
+from utils.button_group_utils import send_group_only_message # Pakai ini buat arahin user
 from utils.button_ownership_utils import is_button_owner
 from utils.chat_timer_utils import set_expire_timer
 from utils.grab_handler_utils import handle_grab
@@ -18,29 +18,26 @@ active_button_owner = {}
 def token_menu(update, context):
     chat = update.effective_chat
     user_id = update.effective_user.id
-    # Ambil owner_id bot yang didaftarkan saat register
     bot_owner_id = context.bot_data.get("owner_id")
 
-    # 1. Cek apakah ini Supergroup
-    if chat.type != "supergroup":
-        update.message.reply_text("⚠️ Perintah ini hanya dapat digunakan di dalam **Supergroup** resmi.", parse_mode="Markdown")
+    # 1. Cek apakah ini Supergroup & Verifikasi Owner
+    is_valid_group = False
+    if chat.type == "supergroup":
+        try:
+            admins = context.bot.get_chat_administrators(chat.id)
+            group_owner = next((admin for admin in admins if admin.status == 'creator'), None)
+            if group_owner and group_owner.user.id == bot_owner_id:
+                is_valid_group = True
+        except Exception as e:
+            logger.error(f"Gagal verifikasi group owner: {e}")
+
+    # 2. Jika tidak valid, kirim pesan arahan (tombol add to group/join)
+    if not is_valid_group:
+        text_warn = "⚠️ **Akses Ditolak!**\nPerintah ini hanya bisa digunakan di dalam **Supergroup Resmi** milik Owner Bot."
+        send_group_only_message(update, text=text_warn)
         return
 
-    # 2. Cek apakah Owner Bot adalah Owner Grup ini
-    try:
-        # Kita ambil list administrator dan cari yang statusnya 'creator'
-        admins = context.bot.get_chat_administrators(chat.id)
-        group_owner = next((admin for admin in admins if admin.status == 'creator'), None)
-        
-        if not group_owner or group_owner.user.id != bot_owner_id:
-            update.message.reply_text("🚫 Grup ini tidak terverifikasi. Gunakan di grup resmi Owner.", parse_mode="Markdown")
-            return
-    except Exception as e:
-        logger.error(f"Gagal verifikasi owner grup: {e}")
-        update.message.reply_text("❌ Gagal memverifikasi keamanan grup.")
-        return
-
-    # Jika lolos verifikasi, tampilkan menu
+    # 3. Jika valid, tampilkan menu seperti biasa
     keyboard = [
         [InlineKeyboardButton("Grab 🚦", callback_data="grab"),
          InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]
@@ -71,9 +68,9 @@ def button_handler(update, context):
 
     try:
         if data in ["grab", "gojek"]:
-            # Validasi ulang tipe chat saat tombol ditekan (opsional tapi aman)
+            # Proteksi tambahan di callback
             if chat.type != "supergroup":
-                query.edit_message_text("⚠️ Hanya bisa di Supergroup.")
+                send_group_only_message(update, "⚠️ Hanya bisa di Supergroup resmi.")
                 return
 
             if str(user_id) not in user_timezone:
@@ -127,7 +124,6 @@ def button_handler(update, context):
             pass
 
 def register_token_handlers(dp, owner_id):
-    # Simpan owner_id bot ke bot_data agar bisa diakses di handler
     dp.bot_data["owner_id"] = owner_id
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler, pattern=r"^(grab|gojek|set_timezone|tz_.*)$"))
