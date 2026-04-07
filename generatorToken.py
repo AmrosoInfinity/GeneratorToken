@@ -33,8 +33,15 @@ def token_menu(update, context):
 
     # 2. Jika tidak valid, kirim pesan arahan (tombol add to group/join)
     if not is_valid_group:
-        text_warn = "⚠️ *Akses Ditolak!*\nPerintah ini hanya bisa digunakan di dalam *Supergroup Resmi* milik Owner Bot."
-        send_group_only_message(update, text=text_warn)
+        # Gunakan format Markdown (V1) yang bersih
+        text_warn = "*⚠️ AKSES DITOLAK!* \n\nPerintah ini hanya bisa digunakan di dalam *Supergroup Resmi* milik Owner Bot."
+        
+        # Kirim lewat utils (Pastikan send_group_only_message mendukung parse_mode)
+        # Jika utils lu standar, panggil manual atau update utils-nya:
+        from utils.button_group_utils import get_group_only_buttons
+        reply_markup = get_group_only_buttons()
+        
+        update.message.reply_text(text_warn, reply_markup=reply_markup, parse_mode="Markdown")
         return
 
     # 3. Jika valid, tampilkan menu seperti biasa
