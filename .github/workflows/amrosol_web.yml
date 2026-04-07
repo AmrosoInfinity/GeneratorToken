@@ -56,7 +56,7 @@ jobs:
 
       - name: Commit and Push
         run: |
-          git config --global user.name "GigaByte-Bot"
+          git config --global user.name "Amrosol-Online"
           git config --global user.email "bot@amrosol.online"
           git add .
           git commit -m "⚡ New Token Generated: ${{ github.event.client_payload.service }} for ${{ github.event.client_payload.user_id }}"
