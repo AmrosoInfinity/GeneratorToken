@@ -1,0 +1,89 @@
+:root {
+    --primary: #00ff88;
+    --bg: #0a0a0a;
+    --card: rgba(255, 255, 255, 0.05);
+    --text-dim: #d1d1d1;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg);
+    color: white;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    background: var(--card);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+h2 { 
+    color: var(--primary); 
+    font-size: 1.1rem; 
+    margin-top: 0;
+    margin-bottom: 24px; 
+    text-transform: uppercase; 
+    letter-spacing: 3px; 
+    font-weight: 800;
+}
+
+.token-box {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px dashed rgba(0, 255, 136, 0.3);
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    word-break: break-all;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    max-height: 250px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+/* Custom Scrollbar biar makin elegan */
+.token-box::-webkit-scrollbar { width: 4px; }
+.token-box::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+.btn-copy {
+    background: var(--primary);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+}
+
+.btn-copy:active { transform: scale(0.97); }
+
+.footer { 
+    margin-top: 24px; 
+    font-size: 0.75rem; 
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.4;
+}
