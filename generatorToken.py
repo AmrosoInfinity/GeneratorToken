@@ -16,6 +16,31 @@ logger = logging.getLogger(__name__)
 active_button_owner = {}
 
 def token_menu(update, context):
+    chat = update.effective_chat
+    user_id = update.effective_user.id
+    # Ambil owner_id bot yang didaftarkan saat register
+    bot_owner_id = context.bot_data.get("owner_id")
+
+    # 1. Cek apakah ini Supergroup
+    if chat.type != "supergroup":
+        update.message.reply_text("⚠️ Perintah ini hanya dapat digunakan di dalam **Supergroup** resmi.", parse_mode="Markdown")
+        return
+
+    # 2. Cek apakah Owner Bot adalah Owner Grup ini
+    try:
+        # Kita ambil list administrator dan cari yang statusnya 'creator'
+        admins = context.bot.get_chat_administrators(chat.id)
+        group_owner = next((admin for admin in admins if admin.status == 'creator'), None)
+        
+        if not group_owner or group_owner.user.id != bot_owner_id:
+            update.message.reply_text("🚫 Grup ini tidak terverifikasi. Gunakan di grup resmi Owner.", parse_mode="Markdown")
+            return
+    except Exception as e:
+        logger.error(f"Gagal verifikasi owner grup: {e}")
+        update.message.reply_text("❌ Gagal memverifikasi keamanan grup.")
+        return
+
+    # Jika lolos verifikasi, tampilkan menu
     keyboard = [
         [InlineKeyboardButton("Grab 🚦", callback_data="grab"),
          InlineKeyboardButton("Gojek 🚦", callback_data="gojek")]
@@ -23,7 +48,7 @@ def token_menu(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = update.message.reply_text(string.TOKEN_MENU_TEXT, reply_markup=reply_markup)
 
-    active_button_owner[msg.message_id] = {"owner": update.effective_user.id, "expired": False}
+    active_button_owner[msg.message_id] = {"owner": user_id, "expired": False}
     set_expire_timer(context, msg.chat_id, msg.message_id, active_button_owner)
 
 def button_handler(update, context):
@@ -46,8 +71,9 @@ def button_handler(update, context):
 
     try:
         if data in ["grab", "gojek"]:
-            if chat.type not in ["group", "supergroup"]:
-                send_group_only_message(update, "⚠️ Command ini hanya bisa digunakan di dalam grup.")
+            # Validasi ulang tipe chat saat tombol ditekan (opsional tapi aman)
+            if chat.type != "supergroup":
+                query.edit_message_text("⚠️ Hanya bisa di Supergroup.")
                 return
 
             if str(user_id) not in user_timezone:
@@ -68,7 +94,6 @@ def button_handler(update, context):
                     tokens = fetch_tokens(url_gojek)
                     if tokens:
                         token = random.choice(tokens).strip()
-                        # Fix Parse Entities Error: Bungkus token dengan backticks secara eksplisit
                         pesan = f"**#### Token Gojek ####**\n\n```{token}```"
                         query.edit_message_text(pesan, parse_mode="Markdown")
                         
@@ -96,12 +121,13 @@ def button_handler(update, context):
 
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
-        # Fallback jika Markdown masih error: kirim tanpa parse_mode
         try:
             query.edit_message_text(f"⚠️ Error Internal: {str(e)}")
         except:
             pass
 
-def register_token_handlers(dp):
+def register_token_handlers(dp, owner_id):
+    # Simpan owner_id bot ke bot_data agar bisa diakses di handler
+    dp.bot_data["owner_id"] = owner_id
     dp.add_handler(CommandHandler("token", token_menu))
     dp.add_handler(CallbackQueryHandler(button_handler, pattern=r"^(grab|gojek|set_timezone|tz_.*)$"))
