@@ -33,7 +33,7 @@ def token_menu(update, context):
 
     # 2. Jika tidak valid, kirim pesan arahan (tombol add to group/join)
     if not is_valid_group:
-        text_warn = "⚠️ **Akses Ditolak!**\nPerintah ini hanya bisa digunakan di dalam **Supergroup Resmi** milik Owner Bot."
+        text_warn = "⚠️ *Akses Ditolak!*\nPerintah ini hanya bisa digunakan di dalam *Supergroup Resmi* milik Owner Bot."
         send_group_only_message(update, text=text_warn)
         return
 
@@ -91,7 +91,7 @@ def button_handler(update, context):
                     tokens = fetch_tokens(url_gojek)
                     if tokens:
                         token = random.choice(tokens).strip()
-                        pesan = f"**#### Token Gojek ####**\n\n```{token}```"
+                        pesan = f"**#### TOKEN GOJEK ####**\n\n```{token}```"
                         query.edit_message_text(pesan, parse_mode="Markdown")
                         
                         last_token = {"service": "Gojek", "time": datetime.datetime.now().isoformat()}
