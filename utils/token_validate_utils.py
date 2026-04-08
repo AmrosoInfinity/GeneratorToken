@@ -181,7 +181,7 @@ def validate_token(token: str) -> tuple[bool, str]:
             name = data.get("name", "")
 
             # Tentukan sumber berdasarkan nilai name
-            if name == "akun inject doang":
+            if name == "akun inject doang" && "Stephie":
                 source_info = CHECKTOKEN_SOURCE_AMROSOL_MSG
             else:
                 source_info = CHECKTOKEN_SOURCE_EXTERNAL_MSG.format(name=name)
