@@ -9,7 +9,7 @@ from support.string import CHECKTOKEN_PROMPT_MSG
 
 def checktoken_command(update, context):
     user_id = update.effective_user.id
-    owner_id = context.bot_data.get("owner_id", 783262896)
+    owner_id = context.bot_data.get("owner_id", 783262896, 7751991873)
 
     # cek apakah user harus diblokir
     if should_block(user_id, owner_id):
