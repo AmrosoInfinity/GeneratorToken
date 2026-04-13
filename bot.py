@@ -18,8 +18,7 @@ def main():
     # 1. Konfigurasi Logging
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=logging.INFO,
-        handlers=[logging.StreamHandler(sys.stdout)]
+        level=logging.DEBUG,
     )
     logger = logging.getLogger(__name__)
 
