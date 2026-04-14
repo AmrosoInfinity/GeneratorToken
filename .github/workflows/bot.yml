@@ -49,8 +49,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git pull --rebase origin main
+          # Tarik dulu perubahan terbaru
+          git pull --rebase --autostash origin main
+
+          # Tambahkan semua folder yang mungkin berubah
           git add config/ data/ tmp/
 
+          # Commit & Push
           git commit -m "Update bot data: njwt, suspects, and logs" || echo "No changes to commit"
           git push origin main
