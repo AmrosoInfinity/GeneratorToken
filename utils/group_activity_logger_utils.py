@@ -6,8 +6,8 @@ from telegram import ParseMode
 DATA_DIR = "data"
 REPORT_DIR = "report"
 GROUPACTIVITYFILE = os.path.join(DATA_DIR, "groupactivity.json")
-os.makedirs(DATA_DIR, existok=True)
-os.makedirs(REPORTDIR, existok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(REPORTDIR, exist_ok=True)
 
 def load_activity():
     if os.path.exists(GROUPACTIVITYFILE):
