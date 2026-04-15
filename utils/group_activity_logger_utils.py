@@ -21,7 +21,7 @@ def save_activity(activity):
 
 activitylog = load_activity()
 
-def loggroupevent(eventtype: str, chatid: int, chattitle: str, actorid: int = None, actor_name: str = None):
+def log_group_event(eventtype: str, chatid: int, chattitle: str, actorid: int = None, actor_name: str = None):
     now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     entry = {
         "time": now,
@@ -34,7 +34,7 @@ def loggroupevent(eventtype: str, chatid: int, chattitle: str, actorid: int = No
     activity_log.append(entry)
     save_activity(activitylog)
 
-def senddailyreport(bot, owner_id: int):
+def send_daily_report(bot, owner_id: int):
     if not activity_log:
         bot.sendmessage(ownerid, "Tidak ada aktivitas grup hari ini.")
         return
