@@ -5,7 +5,7 @@ from telegram import ParseMode
 
 DATA_DIR = "data"
 REPORT_DIR = "report"
-GROUPACTIVITYFILE = os.path.join(DATADIR, "groupactivity.json")
+GROUPACTIVITYFILE = os.path.join(DATA_DIR, "groupactivity.json")
 os.makedirs(DATADIR, existok=True)
 os.makedirs(REPORTDIR, existok=True)
 
