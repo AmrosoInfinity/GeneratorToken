@@ -1,1 +1,5 @@
+<<<<<<< Updated upstream
 [{"time": "2026-04-01 20:10:48", "event": "join", "chat_id": -5057380515, "chat_title": "Berkas", "actor_id": null, "actor_name": null}, {"time": "2026-04-01 20:13:57", "event": "join", "chat_id": -5057380515, "chat_title": "Berkas", "actor_id": null, "actor_name": null}, {"time": "2026-04-01 20:14:25", "event": "join", "chat_id": -1003733800186, "chat_title": "Berkas", "actor_id": null, "actor_name": null}, {"time": "2026-04-01 20:15:30", "event": "join", "chat_id": -1003733800186, "chat_title": "Berkas", "actor_id": null, "actor_name": null}, {"time": "2026-04-14 17:41:52", "event": "leave", "chat_id": 5972890159, "chat_title": null, "actor_id": 5972890159, "actor_name": null}]
+=======
+[{"time": "2026-04-15 00:36:05", "event": "leave", "chat_id": 7751438692, "chat_title": null, "actor_id": 7751438692, "actor_name": "Rizky_0996"}]
+>>>>>>> Stashed changes
