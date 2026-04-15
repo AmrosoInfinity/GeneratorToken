@@ -11,12 +11,19 @@ os.makedirs(REPORT_DIR, exist_ok=True)
 
 def load_activity():
     if os.path.exists(GROUP_ACTIVITY_FILE):
-        with open(GROUP_ACTIVITY_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(GROUP_ACTIVITY_FILE, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if not content:
+                    return []  # file kosong → default list
+                return json.loads(content)
+        except (json.JSONDecodeError, OSError):
+            # kalau file rusak atau tidak bisa dibaca
+            return []
     return []
 
 def save_activity(activity):
-    with open(GROUP_ACTIVITY_FILE, "w") as f:
+    with open(GROUP_ACTIVITY_FILE, "w", encoding="utf-8") as f:
         json.dump(activity, f)
 
 activity_log = load_activity()
@@ -54,7 +61,7 @@ def send_daily_report(bot, owner_id: int):
 
     # Simpan arsip ke report/ dengan nama file per tanggal
     filename = os.path.join(REPORT_DIR, f"report_{time.strftime('%Y%m%d')}.json")
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         json.dump(activity_log, f)
 
     # reset log setelah laporan harian dikirim
