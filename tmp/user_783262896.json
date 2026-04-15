@@ -1,10 +1,8 @@
 {
-  "user_requests": {
-    "5069846589_2026-04-15": 1
-  },
+  "user_requests": {},
   "user_blocked": {},
   "user_timezone": {
-    "5069846589": "Asia/Jakarta"
+    "783262896": "Asia/Jakarta"
   },
   "token_usage": {},
   "last_token": {}
