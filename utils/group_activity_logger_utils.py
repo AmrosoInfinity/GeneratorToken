@@ -19,7 +19,7 @@ def save_activity(activity):
     with open(GROUPACTIVITYFILE, "w") as f:
         json.dump(activity, f)
 
-activitylog = loadactivity()
+activitylog = load_activity()
 
 def loggroupevent(eventtype: str, chatid: int, chattitle: str, actorid: int = None, actor_name: str = None):
     now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -32,7 +32,7 @@ def loggroupevent(eventtype: str, chatid: int, chattitle: str, actorid: int = No
         "actorname": actorname
     }
     activity_log.append(entry)
-    saveactivity(activitylog)
+    save_activity(activitylog)
 
 def senddailyreport(bot, owner_id: int):
     if not activity_log:
@@ -59,4 +59,4 @@ def senddailyreport(bot, owner_id: int):
 
     # reset log setelah laporan harian dikirim
     activity_log.clear()
-    saveactivity(activitylog)
+    save_activity(activitylog)
