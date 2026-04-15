@@ -7,7 +7,7 @@ DATA_DIR = "data"
 REPORT_DIR = "report"
 GROUPACTIVITYFILE = os.path.join(DATA_DIR, "groupactivity.json")
 os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(REPORTDIR, exist_ok=True)
+os.makedirs(REPORT_DIR, exist_ok=True)
 
 def load_activity():
     if os.path.exists(GROUPACTIVITYFILE):
@@ -53,7 +53,7 @@ def senddailyreport(bot, owner_id: int):
     bot.sendmessage(ownerid, reporttext, parsemode=ParseMode.HTML)
 
     # Simpan arsip ke report/ dengan nama file per tanggal
-    filename = os.path.join(REPORTDIR, f"report{time.strftime('%Y%m%d')}.json")
+    filename = os.path.join(REPORT_DIR, f"report{time.strftime('%Y%m%d')}.json")
     with open(filename, "w") as f:
         json.dump(activity_log, f)
 
