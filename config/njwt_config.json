@@ -3,5 +3,9 @@
     "iat": 1777343197,
     "exp": 4930943200,
     "sub": "29a98fdd-6833-48bd-8595-f34bf57b424f",
+<<<<<<< Updated upstream
     "updated_at": 1777345459
+=======
+    "updated_at": 1777353535
+>>>>>>> Stashed changes
 }
