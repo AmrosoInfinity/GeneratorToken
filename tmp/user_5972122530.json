@@ -1,0 +1,14 @@
+{
+  "user_requests": {
+    "5972122530_2026-05-02": 1
+  },
+  "user_blocked": {},
+  "user_timezone": {
+    "5972122530": "Asia/Jakarta"
+  },
+  "token_usage": {},
+  "last_token": {
+    "service": "Gojek",
+    "time": "2026-05-02T13:24:51.719408"
+  }
+}
