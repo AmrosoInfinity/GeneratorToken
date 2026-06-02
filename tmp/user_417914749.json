@@ -1,11 +1,10 @@
 {
   "user_requests": {
-    "6329608420_2026-05-30": 3,
-    "6329608420_2026-06-02": 1
+    "417914749_2026-06-02": 1
   },
   "user_blocked": {},
   "user_timezone": {
-    "6329608420": "Asia/Jakarta"
+    "417914749": "Asia/Jakarta"
   },
   "token_usage": {},
   "last_token": {}
