@@ -39,7 +39,7 @@ def main():
         "my_migrated_bot",
         api_id=int(api_id),
         api_hash=api_hash,
-        session_string=session_token
+        session_string=token
     )
 
     logger.info("🛠 Memulai registrasi handler dengan Pyrogram...")
