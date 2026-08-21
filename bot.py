@@ -1,7 +1,8 @@
 import os
 import logging
 import sys
-from telegram.ext import Updater
+#from telegram.ext import Updater
+from pyrogram import Client, filters
 
 # Import SEMUA modul
 from generatorToken import register_token_handlers
