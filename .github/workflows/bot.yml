@@ -36,8 +36,6 @@ jobs:
 
       - name: Run Telegram Bot
         env:
-          API_ID: ${{ secrets.API_ID }}
-          API_HASH: ${{ secrets.API_HASH }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }}
@@ -60,3 +58,4 @@ jobs:
           # Commit & Push
           git commit -m "Update bot data: njwt, suspects, and logs" || echo "No changes to commit"
           git push origin main
+          
