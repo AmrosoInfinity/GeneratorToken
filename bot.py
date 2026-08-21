@@ -24,6 +24,8 @@ def main():
     logger = logging.getLogger(__name__)
 
     # 2. Ambil Environment Variables
+    api_id = os.getenv("API_ID")
+    api_hash = os.getenv("API_HASH")
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     raw_owner = os.getenv("BOT_OWNER_ID")
     owner_id = int(raw_owner) if raw_owner else 0
