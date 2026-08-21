@@ -33,11 +33,14 @@ def main():
         return
 
     # 3. Inisialisasi Updater
-    updater = Updater(token, use_context=True)
-    dp = updater.dispatcher
+    app = Client(
+        "my_migrated_bot",
+        api_id=int(api_id),
+        api_hash=api_hash,
+        session_string=session_token
+    )
 
-    logger.info("🛠 Memulai registrasi handler FLAT...")
-
+    logger.info("🛠 Memulai registrasi handler dengan Pyrogram...")
     # --- REGISTRASI FULL FLAT (WAJIB URUTAN INI) ---
 
     # 1. PERINTAH UTAMA & INPUT (BIAR /TOKEN GAK MATI)
@@ -59,12 +62,9 @@ def main():
     logger.info("✅ Registrasi selesai. Menghubungkan ke Telegram...")
 
     # 4. Jalankan Bot
-    updater.start_polling(drop_pending_updates=True)
-    
+    app.run()
     logger.info("🤖 Bot AKTIF.")
     
-    updater.idle()
-
 if __name__ == "__main__":
     try:
         main()
