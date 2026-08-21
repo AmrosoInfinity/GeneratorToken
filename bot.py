@@ -1,8 +1,7 @@
 import os
 import logging
 import sys
-#from telegram.ext import Updater
-from pyrogram import Client, filters
+from telegram.ext import Updater
 
 # Import SEMUA modul
 from generatorToken import register_token_handlers
@@ -24,8 +23,6 @@ def main():
     logger = logging.getLogger(__name__)
 
     # 2. Ambil Environment Variables
-    api_id = os.getenv("API_ID")
-    api_hash = os.getenv("API_HASH")
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     raw_owner = os.getenv("BOT_OWNER_ID")
     owner_id = int(raw_owner) if raw_owner else 0
@@ -35,14 +32,11 @@ def main():
         return
 
     # 3. Inisialisasi Updater
-    app = Client(
-        "my_migrated_bot",
-        api_id=int(api_id),
-        api_hash=api_hash,
-        session_string=token
-    )
+    updater = Updater(token, use_context=True)
+    dp = updater.dispatcher
 
-    logger.info("🛠 Memulai registrasi handler dengan Pyrogram...")
+    logger.info("🛠 Memulai registrasi handler FLAT...")
+
     # --- REGISTRASI FULL FLAT (WAJIB URUTAN INI) ---
 
     # 1. PERINTAH UTAMA & INPUT (BIAR /TOKEN GAK MATI)
@@ -64,11 +58,15 @@ def main():
     logger.info("✅ Registrasi selesai. Menghubungkan ke Telegram...")
 
     # 4. Jalankan Bot
-    app.run()
+    updater.start_polling(drop_pending_updates=True)
+    
     logger.info("🤖 Bot AKTIF.")
     
+    updater.idle()
+
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         logging.error(f"❌ KESALAHAN SISTEM: {e}", exc_info=True)
+    
