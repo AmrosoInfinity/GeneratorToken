@@ -38,7 +38,7 @@ jobs:
         env:
           API_ID: ${{ secrets.API_ID }}
           API_HASH: ${{ secrets.API_HASH }}
-          SESSION_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FRONTEND_TOKEN: ${{ secrets.FRONTEND_TOKEN }}
           BOT_OWNER_ID: ${{ secrets.BOT_OWNER_ID }}
